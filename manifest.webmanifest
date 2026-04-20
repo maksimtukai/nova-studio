@@ -1,0 +1,19 @@
+{
+  "name": "Nova Studio",
+  "short_name": "Nova",
+  "description": "Nova Studio mobile web app",
+  "start_url": "/nova/index.html",
+  "scope": "/nova/",
+  "display": "standalone",
+  "background_color": "#09101d",
+  "theme_color": "#09101d",
+  "lang": "ru",
+  "icons": [
+    {
+      "src": "/nova/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
