@@ -289,7 +289,7 @@
       updateStats();
 
       if (!pollTimer) {
-        pollTimer = setInterval(() => fetchLogs(false), 2000);
+        pollTimer = setInterval(() => fetchLogs(false), 500);
       }
     } catch(err) {
       showMsg('ошибка: ' + err.message);
