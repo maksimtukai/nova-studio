@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Nova Errors</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0d0d0d; color: #ff4444;
+      font-family: 'Courier New', monospace; font-size: 13px;
+      height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+    }
+    #topbar {
+      background: #111; border-bottom: 1px solid #1a1a1a;
+      padding: 7px 16px; display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+    }
+    .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+    .dot-red { background: #ff5f57; } .dot-yellow { background: #febc2e; } .dot-green { background: #28c840; }
+    .title { flex:1; text-align:center; color:#444; font-size:11px; letter-spacing:2px; text-transform:uppercase; }
+    #toolbar {
+      background: #0f0f0f; border-bottom: 1px solid #1a1a1a;
+      padding: 6px 16px; display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+    }
+    .btn {
+      background: #1a0000; border: 1px solid #ff4444; color: #ff4444;
+      font-family: inherit; font-size: 11px; padding: 4px 14px;
+      border-radius: 3px; cursor: pointer; letter-spacing: 1px; transition: all .15s;
+    }
+    .btn:hover { background: #ff4444; color: #0d0d0d; }
+    .btn-gray { border-color: #333; color: #333; background: transparent; }
+    .btn-gray:hover { background: #333; color: #0d0d0d; }
+    #count { font-size: 11px; color: #444; margin-left: auto; }
+    #terminal {
+      flex: 1; overflow-y: auto; padding: 10px 16px;
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    #terminal::-webkit-scrollbar { width: 5px; }
+    #terminal::-webkit-scrollbar-track { background: #111; }
+    #terminal::-webkit-scrollbar-thumb { background: #2a0000; border-radius: 3px; }
+    .entry {
+      display: grid; grid-template-columns: 160px 80px 1fr;
+      gap: 10px; padding: 4px 0;
+      border-bottom: 1px solid #110000;
+      animation: fi .2s ease;
+    }
+    @keyframes fi { from{opacity:0;transform:translateX(-4px)} to{opacity:1} }
+    .e-time { color: #444; font-size: 11px; }
+    .e-src  { color: #ff8800; font-size: 11px; }
+    .e-msg  { color: #ff4444; word-break: break-all; }
+    .e-detail { color: #662222; font-size: 10px; margin-top: 2px; }
+    #empty { color: #1a1a1a; text-align: center; margin-top: 80px; font-size: 13px; letter-spacing: 2px; }
+    #status { font-size: 11px; color: #333; }
+  </style>
+</head>
+<body>
+
+<div id="topbar">
+  <span class="dot dot-red"></span>
+  <span class="dot dot-yellow"></span>
+  <span class="dot dot-green"></span>
+  <span class="title">nova error log</span>
+</div>
+
+<div id="toolbar">
+  <button class="btn" onclick="loadErrors()">ОБНОВИТЬ</button>
+  <button class="btn btn-gray" onclick="clearView()">ОЧИСТИТЬ ВИД</button>
+  <span id="status">загрузка...</span>
+  <span id="count"></span>
+</div>
+
+<div id="terminal">
+  <div id="empty">// ошибок нет — хорошо!</div>
+</div>
+
+<script>
+  if (location.protocol === 'file:') { location.replace('http://localhost:43219/nova/errors.html'); }
+  const LOG_URL = '/nova/errors.log';
+  let allErrors = [];
+
+  async function loadErrors() {
+    document.getElementById('status').textContent = 'обновление...';
+    try {
+      const res = await fetch(LOG_URL + '?_=' + Date.now(), { headers: { 'ngrok-skip-browser-warning': 'true' } });
+      if (res.status === 404) {
+        document.getElementById('status').textContent = 'лог пуст';
+        render([]);
+        return;
+      }
+      const text = await res.text();
+      const lines = text.trim() ? text.trim().split('\n') : [];
+      allErrors = [];
+      lines.forEach(line => {
+        try { allErrors.push(JSON.parse(line.trim())); } catch {}
+      });
+      render(allErrors);
+      document.getElementById('status').textContent = 'обновлено ' + new Date().toLocaleTimeString();
+      document.getElementById('count').textContent = allErrors.length + ' ошибок';
+    } catch(e) {
+      document.getElementById('status').textContent = 'ошибка загрузки: ' + e.message;
+    }
+  }
+
+  function render(entries) {
+    const term = document.getElementById('terminal');
+    term.innerHTML = '';
+    if (!entries.length) {
+      term.innerHTML = '<div id="empty">// ошибок нет — хорошо!</div>';
+      return;
+    }
+    [...entries].reverse().forEach(e => {
+      const div = document.createElement('div');
+      div.className = 'entry';
+      const detail = e.detail ? `<div class="e-detail">↳ ${esc(e.detail)}</div>` : '';
+      div.innerHTML = `
+        <span class="e-time">${fmt(e.t)}</span>
+        <span class="e-src">[${esc(e.src || '?')}]</span>
+        <span class="e-msg">${esc(e.msg || '')}${detail}</span>`;
+      term.appendChild(div);
+    });
+  }
+
+  function clearView() {
+    document.getElementById('terminal').innerHTML = '<div id="empty">// очищено (файл не удалён)</div>';
+    document.getElementById('count').textContent = '';
+  }
+
+  function fmt(iso) {
+    try {
+      const d = new Date(iso);
+      return pad(d.getDate())+'.'+pad(d.getMonth()+1)+' '+pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
+    } catch { return iso || ''; }
+  }
+  function pad(n) { return String(n).padStart(2,'0'); }
+  function esc(s) {
+    if (!s) return '';
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  loadErrors();
+  setInterval(loadErrors, 15000);
+</script>
+</body>
+</html>

@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visitors Terminal</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0d0d0d;
+      color: #00ff41;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 13px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #topbar {
+      background: #111;
+      border-bottom: 1px solid #1a1a1a;
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+
+    #topbar .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+    .dot-red    { background: #ff5f57; }
+    .dot-yellow { background: #febc2e; }
+    .dot-green  { background: #28c840; }
+
+    #topbar .title {
+      flex: 1;
+      text-align: center;
+      color: #555;
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    #auth-bar {
+      background: #111;
+      border-bottom: 1px solid #1a1a1a;
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    #auth-bar label { color: #555; font-size: 11px; }
+
+    #auth-bar input {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      color: #00ff41;
+      font-family: inherit;
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 3px;
+      width: 280px;
+      outline: none;
+    }
+    #auth-bar input:focus { border-color: #00ff41; }
+
+    #auth-bar button {
+      background: #0a2a0a;
+      border: 1px solid #00ff41;
+      color: #00ff41;
+      font-family: inherit;
+      font-size: 11px;
+      padding: 4px 12px;
+      border-radius: 3px;
+      cursor: pointer;
+      letter-spacing: 1px;
+    }
+    #auth-bar button:hover { background: #00ff41; color: #0d0d0d; }
+
+    #status-bar {
+      background: #0a0a0a;
+      border-bottom: 1px solid #1a1a1a;
+      padding: 4px 16px;
+      display: flex;
+      gap: 24px;
+      align-items: center;
+      flex-shrink: 0;
+      font-size: 11px;
+      color: #444;
+    }
+
+    #status-bar .live { color: #00ff41; }
+    #status-bar .live::before {
+      content: '';
+      display: inline-block;
+      width: 6px; height: 6px;
+      background: #00ff41;
+      border-radius: 50%;
+      margin-right: 6px;
+      animation: blink 1.2s infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+    #terminal {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    #terminal::-webkit-scrollbar { width: 6px; }
+    #terminal::-webkit-scrollbar-track { background: #111; }
+    #terminal::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 3px; }
+
+    .entry {
+      display: grid;
+      grid-template-columns: 160px 120px 40px 1fr;
+      gap: 12px;
+      padding: 3px 0;
+      border-bottom: 1px solid #111;
+      animation: fadein 0.3s ease;
+      align-items: baseline;
+    }
+    @keyframes fadein { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; } }
+
+    .e-time  { color: #555; }
+    .e-ip    { color: #0af; }
+    .e-status { font-weight: bold; text-align: center; }
+    .s-200   { color: #00ff41; }
+    .s-304   { color: #888; }
+    .s-404   { color: #ff8800; }
+    .s-403   { color: #ff4444; }
+    .s-405   { color: #ff4444; }
+    .s-other { color: #ffff00; }
+    .e-path  { color: #ccc; word-break: break-all; }
+    .e-ua    { color: #444; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .entry-full {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 160px 120px 40px 1fr;
+      gap: 12px;
+    }
+
+    .sys-line {
+      color: #333;
+      font-size: 11px;
+      padding: 4px 0;
+    }
+    .sys-line span { color: #555; }
+
+    #empty {
+      color: #2a2a2a;
+      text-align: center;
+      margin-top: 60px;
+      font-size: 14px;
+      letter-spacing: 2px;
+    }
+
+    #filter-bar {
+      background: #0a0a0a;
+      border-bottom: 1px solid #1a1a1a;
+      padding: 5px 16px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-shrink: 0;
+      font-size: 11px;
+    }
+    #filter-bar label { color: #444; }
+    #filter-bar input {
+      background: #111;
+      border: 1px solid #1a1a1a;
+      color: #aaa;
+      font-family: inherit;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 3px;
+      width: 160px;
+      outline: none;
+    }
+    #filter-bar input:focus { border-color: #00ff41; }
+
+    #clear-btn {
+      margin-left: auto;
+      background: transparent;
+      border: 1px solid #2a2a2a;
+      color: #444;
+      font-family: inherit;
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+      letter-spacing: 1px;
+    }
+    #clear-btn:hover { border-color: #ff4444; color: #ff4444; }
+  </style>
+</head>
+<body>
+
+<div id="topbar">
+  <span class="dot dot-red"></span>
+  <span class="dot dot-yellow"></span>
+  <span class="dot dot-green"></span>
+  <span class="title">visitors terminal</span>
+</div>
+
+<div id="auth-bar">
+  <label>ADMIN KEY:</label>
+  <input type="password" id="keyInput" placeholder="введите admin key..." autocomplete="off">
+  <button onclick="connect()">CONNECT</button>
+  <span id="auth-msg" style="font-size:11px;color:#ff4444;margin-left:8px;"></span>
+</div>
+
+<div id="filter-bar">
+  <label>FILTER IP:</label>
+  <input type="text" id="filterIp" placeholder="192.168.x.x">
+  <label style="margin-left:8px;">PATH:</label>
+  <input type="text" id="filterPath" placeholder="/nova/...">
+  <button id="clear-btn" onclick="clearLog()">CLEAR</button>
+</div>
+
+<div id="status-bar">
+  <span id="live-dot" style="display:none" class="live">LIVE</span>
+  <span id="stat-total">total: —</span>
+  <span id="stat-uniq">unique IPs: —</span>
+  <span id="stat-last">last: —</span>
+</div>
+
+<div id="terminal">
+  <div id="empty">// no visitors yet —  waiting for connections...</div>
+</div>
+
+<script>
+  const LOG_URL = 'http://localhost:43219/nova/visitors.log';
+  const CORRECT_KEY = 'Maksim2011';
+  let adminKey = '';
+  let sinceIndex = 0;
+  let pollTimer = null;
+  let allEntries = [];
+  let seenIPs = new Set();
+
+  function connect() {
+    adminKey = document.getElementById('keyInput').value.trim();
+    if (!adminKey) { showMsg('введите ключ'); return; }
+    if (adminKey !== CORRECT_KEY) { showMsg('неверный ключ'); return; }
+    sinceIndex = 0;
+    allEntries = [];
+    seenIPs = new Set();
+    document.getElementById('terminal').innerHTML = '<div id="empty">// connecting...</div>';
+    fetchLogs(true);
+  }
+
+  async function fetchLogs(initial = false) {
+    try {
+      const res = await fetch(LOG_URL + '?_=' + Date.now());
+      if (!res.ok && res.status !== 404) { showMsg('ошибка сервера'); return; }
+      showMsg('');
+      document.getElementById('live-dot').style.display = '';
+
+      const text = res.status === 404 ? '' : await res.text();
+      const lines = text.trim() ? text.trim().split('\n') : [];
+      const newLines = lines.slice(sinceIndex);
+      const newEntries = [];
+      newLines.forEach(line => {
+        try {
+          const e = JSON.parse(line.trim());
+          newEntries.push(e);
+          allEntries.push(e);
+          if (e.ip) seenIPs.add(e.ip);
+        } catch {}
+      });
+      sinceIndex = lines.length;
+
+      if (initial) {
+        if (allEntries.length > 0) {
+          renderEntries(allEntries, true);
+        } else {
+          document.getElementById('terminal').innerHTML = '<div id="empty">// no visitors yet — waiting for connections...</div>';
+        }
+      } else if (newEntries.length > 0) {
+        renderEntries(newEntries, false);
+      }
+      updateStats();
+
+      if (!pollTimer) {
+        pollTimer = setInterval(() => fetchLogs(false), 2000);
+      }
+    } catch(err) {
+      showMsg('ошибка: ' + err.message);
+    }
+  }
+
+  function renderEntries(entries, replace = false) {
+    const term = document.getElementById('terminal');
+    const filterIp   = document.getElementById('filterIp').value.trim().toLowerCase();
+    const filterPath = document.getElementById('filterPath').value.trim().toLowerCase();
+
+    if (replace) term.innerHTML = '';
+
+    entries.forEach(e => {
+      if (filterIp   && !e.ip.toLowerCase().includes(filterIp))   return;
+      if (filterPath && !e.p.toLowerCase().includes(filterPath))  return;
+
+      const div = document.createElement('div');
+      div.className = 'entry';
+
+      const sc = statusClass(e.s);
+      const ua = e.ua ? `<div class="e-ua" title="${esc(e.ua)}">${esc(e.ua)}</div>` : '';
+      const ref = e.r ? `<div class="e-ua" style="color:#336">↩ ${esc(e.r)}</div>` : '';
+
+      div.innerHTML = `
+        <span class="e-time">${formatTime(e.t)}</span>
+        <span class="e-ip">${esc(e.ip)}</span>
+        <span class="e-status ${sc}">${e.s}</span>
+        <span class="e-path">${esc(e.m)} ${esc(e.p)}${ua ? '<br>' + ua : ''}${ref ? '<br>' + ref : ''}</span>
+      `;
+      term.appendChild(div);
+    });
+
+    term.scrollTop = term.scrollHeight;
+  }
+
+  function updateStats() {
+    document.getElementById('stat-total').textContent = `total: ${allEntries.length}`;
+    document.getElementById('stat-uniq').textContent  = `unique IPs: ${seenIPs.size}`;
+    if (allEntries.length > 0) {
+      const last = allEntries[allEntries.length - 1];
+      document.getElementById('stat-last').textContent = `last: ${last.ip} → ${last.p}`;
+    }
+  }
+
+  function clearLog() {
+    document.getElementById('terminal').innerHTML = '<div id="empty">// cleared — watching for new visitors...</div>';
+    allEntries = [];
+    seenIPs = new Set();
+    updateStats();
+  }
+
+  function stopPoll() {
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    document.getElementById('live-dot').style.display = 'none';
+  }
+
+  function showMsg(msg) {
+    document.getElementById('auth-msg').textContent = msg;
+  }
+
+  function statusClass(s) {
+    if (s === 200) return 's-200';
+    if (s === 304) return 's-304';
+    if (s === 404) return 's-404';
+    if (s === 403) return 's-403';
+    if (s === 405) return 's-405';
+    return 's-other';
+  }
+
+  function formatTime(iso) {
+    try {
+      const d = new Date(iso);
+      const pad = n => String(n).padStart(2,'0');
+      return `${pad(d.getDate())}.${pad(d.getMonth()+1)} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    } catch { return iso; }
+  }
+
+  function esc(s) {
+    if (!s) return '';
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // apply filter on Enter
+  document.getElementById('filterIp').addEventListener('keydown',   e => { if(e.key==='Enter') renderEntries(allEntries, true); });
+  document.getElementById('filterPath').addEventListener('keydown', e => { if(e.key==='Enter') renderEntries(allEntries, true); });
+  document.getElementById('keyInput').addEventListener('keydown',   e => { if(e.key==='Enter') connect(); });
+
+  // load saved key
+  const saved = localStorage.getItem('nova_visitors_key');
+  if (saved) { document.getElementById('keyInput').value = saved; }
+  document.getElementById('keyInput').addEventListener('input', () => {
+    localStorage.setItem('nova_visitors_key', document.getElementById('keyInput').value);
+  });
+</script>
+</body>
+</html>

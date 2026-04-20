@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nova Launcher</title>
+  <link rel="manifest" href="/nova/launcher.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="/nova/app-icon.svg">
+  <meta name="theme-color" content="#00ff9d">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Nova">
+  <link rel="apple-touch-icon" href="/nova/app-icon.svg">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0a0f;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+
+    .logo {
+      font-size: 36px;
+      font-weight: 800;
+      letter-spacing: 4px;
+      color: #00ff9d;
+      text-shadow: 0 0 30px rgba(0,255,157,0.4);
+      margin-bottom: 6px;
+    }
+    .subtitle {
+      font-size: 12px;
+      color: #666;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 50px;
+    }
+
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      background: #111;
+      border: 1px solid #1a1a1a;
+      border-radius: 12px;
+      padding: 12px 24px;
+      margin-bottom: 40px;
+      font-size: 12px;
+    }
+    .status-item { display: flex; align-items: center; gap: 8px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #333; }
+    .dot.on  { background: #00ff9d; box-shadow: 0 0 8px #00ff9d; animation: pulse 2s infinite; }
+    .dot.off { background: #ff4444; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+    .status-label { color: #444; }
+    .status-val { color: #aaa; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      max-width: 700px;
+      width: 100%;
+      margin-bottom: 30px;
+    }
+
+    .card {
+      background: #111;
+      border: 1px solid #1a1a1a;
+      border-radius: 16px;
+      padding: 24px 20px;
+      cursor: pointer;
+      transition: all .2s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: inherit;
+    }
+    .card:hover {
+      border-color: var(--c);
+      background: #161616;
+      transform: translateY(-3px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    }
+    .card-icon { font-size: 28px; }
+    .card-name { font-size: 13px; font-weight: 600; color: #ccc; }
+    .card-desc { font-size: 11px; color: #444; text-align: center; }
+    .card-badge {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.05);
+      color: var(--c);
+      border: 1px solid var(--c);
+      margin-top: 4px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .btn {
+      padding: 10px 28px;
+      border-radius: 10px;
+      border: none;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+      letter-spacing: 1px;
+    }
+    .btn-start { background: #00ff9d; color: #0a0a0f; }
+    .btn-start:hover { background: #00e88d; transform: translateY(-1px); }
+    .btn-stop  { background: #1a1a1a; color: #ff4444; border: 1px solid #ff4444; }
+    .btn-stop:hover  { background: #ff4444; color: #fff; }
+    .btn-restart { background: #1a1a1a; color: #f59e0b; border: 1px solid #f59e0b; }
+    .btn-restart:hover { background: #f59e0b; color: #fff; }
+
+    .ngrok-row {
+      margin-top: 20px;
+      background: #111;
+      border: 1px solid #1a1a1a;
+      border-radius: 10px;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 12px;
+      max-width: 700px;
+      width: 100%;
+    }
+    .ngrok-url { color: #0af; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-decoration: none; }
+    .ngrok-url:hover { text-decoration: underline; }
+    .copy-btn {
+      background: transparent; border: 1px solid #0af; color: #0af;
+      font-size: 11px; padding: 3px 10px; border-radius: 6px;
+      cursor: pointer; transition: all .15s; font-family: inherit;
+    }
+    .copy-btn:hover { background: #0af; color: #0a0a0f; }
+  </style>
+</head>
+<body>
+
+<div class="logo">NOVA</div>
+<div class="subtitle">Studio Launcher</div>
+
+<div class="status-bar">
+  <div class="status-item">
+    <span class="dot" id="dot-srv"></span>
+    <span class="status-label">Сервер</span>
+    <span class="status-val" id="val-srv">...</span>
+  </div>
+  <div class="status-item">
+    <span class="dot" id="dot-ngrok"></span>
+    <span class="status-label">ngrok</span>
+    <span class="status-val" id="val-ngrok">...</span>
+  </div>
+  <div class="status-item">
+    <span class="status-label">uptime:</span>
+    <span class="status-val" id="val-uptime">—</span>
+  </div>
+</div>
+
+<div class="grid">
+  <a class="card" href="http://localhost:43219/nova/" target="_blank" style="--c:#00ff9d">
+    <span class="card-icon">🌐</span>
+    <span class="card-name">Сайт</span>
+    <span class="card-desc">Главная страница Nova Studio</span>
+    <span class="card-badge">localhost</span>
+  </a>
+  <a class="card" href="http://localhost:43219/nova/panel.html" target="_blank" style="--c:#a78bfa">
+    <span class="card-icon">🛡️</span>
+    <span class="card-name">Панель</span>
+    <span class="card-desc">Управление сервером</span>
+    <span class="card-badge">admin</span>
+  </a>
+  <a class="card" href="http://localhost:43219/nova/login.html" target="_blank" style="--c:#60a5fa">
+    <span class="card-icon">🔑</span>
+    <span class="card-name">Логин</span>
+    <span class="card-desc">Вход для пользователей</span>
+    <span class="card-badge">auth</span>
+  </a>
+  <a class="card" href="http://localhost:43219/nova/visitors.html" target="_blank" style="--c:#34d399">
+    <span class="card-icon">👥</span>
+    <span class="card-name">Посетители</span>
+    <span class="card-desc">Статистика посещений</span>
+    <span class="card-badge">stats</span>
+  </a>
+  <a class="card" href="http://localhost:43219/nova/control.html" target="_blank" style="--c:#f59e0b">
+    <span class="card-icon">⚡</span>
+    <span class="card-name">Терминал</span>
+    <span class="card-desc">Nova Control Terminal</span>
+    <span class="card-badge">control</span>
+  </a>
+  <a class="card" href="http://localhost:43219/nova/errors.html" target="_blank" style="--c:#f87171">
+    <span class="card-icon">🔴</span>
+    <span class="card-name">Ошибки</span>
+    <span class="card-desc">Лог серверных ошибок</span>
+    <span class="card-badge">errors</span>
+  </a>
+</div>
+
+<div class="actions">
+  <button class="btn btn-start" onclick="startServer()">▶ СТАРТ</button>
+  <button class="btn btn-stop"  onclick="stopServer()">■ СТОП</button>
+  <button class="btn btn-restart" onclick="restartServer()">↺ РЕСТАРТ</button>
+  <button class="btn" id="install-btn" style="display:none;background:#0a0a0f;color:#00ff9d;border:1px solid #00ff9d">⬇ Установить</button>
+</div>
+
+<div class="ngrok-row">
+  <span style="color:#444;font-size:11px">ngrok:</span>
+  <a class="ngrok-url" id="ngrok-link" href="#" target="_blank">загрузка...</a>
+  <button class="copy-btn" id="copy-btn" onclick="copyNgrok()">COPY</button>
+</div>
+
+<script>
+  // Если открыт как файл — показать инструкцию
+  if (location.protocol === 'file:') {
+    document.body.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:20px;font-family:'Segoe UI',sans-serif;background:#0a0a0f;color:#fff;">
+        <div style="font-size:32px;font-weight:800;letter-spacing:4px;color:#00ff9d;">NOVA</div>
+        <div style="font-size:12px;color:#333;letter-spacing:3px;">STUDIO LAUNCHER</div>
+        <div style="background:#111;border:1px solid #1a1a1a;border-radius:12px;padding:24px 32px;text-align:center;max-width:400px;">
+          <div style="font-size:14px;color:#aaa;margin-bottom:16px;">Сервер не запущен</div>
+          <div style="font-size:12px;color:#555;margin-bottom:20px;">Дважды кликни <b style="color:#00ff9d">СТАРТ.bat</b> в папке сервера,<br>затем вернись сюда.</div>
+          <a href="http://localhost:43219/nova/launcher.html" style="display:inline-block;background:#00ff9d;color:#0a0a0f;padding:10px 28px;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;letter-spacing:1px;">Открыть лаунчер</a>
+        </div>
+      </div>`;
+  }
+
+  const API = 'http://localhost:8093/api';
+  const KEY = 'Maksim2011';
+  let serverStartTime = null;
+
+  function tickUptime() {
+    if (!serverStartTime) return;
+    const s = Math.floor((Date.now() - serverStartTime) / 1000);
+    const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sc = s%60;
+    document.getElementById('val-uptime').textContent = pad(h)+':'+pad(m)+':'+pad(sc);
+  }
+
+  function fetchWithTimeout(url, opts, ms = 3000) {
+    const ctrl = new AbortController();
+    const id = setTimeout(() => ctrl.abort(), ms);
+    return fetch(url, { ...opts, signal: ctrl.signal }).finally(() => clearTimeout(id));
+  }
+
+  async function checkStatus() {
+    try {
+      const r = await fetchWithTimeout(API + '/status', { headers: { 'X-Admin-Key': KEY } });
+      const d = await r.json();
+      const on = d.running;
+      document.getElementById('dot-srv').className = 'dot ' + (on ? 'on' : 'off');
+      document.getElementById('val-srv').textContent = on ? 'online' : 'offline';
+      if (on && d.startTime) {
+        serverStartTime = new Date(d.startTime).getTime();
+        tickUptime();
+      } else {
+        serverStartTime = null;
+        document.getElementById('val-uptime').textContent = '—';
+      }
+    } catch {
+      document.getElementById('dot-srv').className = 'dot off';
+      document.getElementById('val-srv').textContent = 'недоступен';
+    }
+
+    try {
+      const r2 = await fetchWithTimeout(API + '/ngrok', { headers: { 'X-Admin-Key': KEY } });
+      const d2 = await r2.json();
+      const url = d2.url;
+      const el = document.getElementById('ngrok-link');
+      document.getElementById('dot-ngrok').className = 'dot ' + (url ? 'on' : 'off');
+      document.getElementById('val-ngrok').textContent = url ? 'online' : 'offline';
+      if (url) { el.textContent = url; el.href = url + '/nova/'; }
+      else { el.textContent = 'не запущен'; el.href = '#'; }
+    } catch {}
+  }
+
+  async function startServer() {
+    await fetch(API + '/start', { method: 'POST', headers: { 'X-Admin-Key': KEY } }).catch(()=>{});
+    setTimeout(checkStatus, 800);
+  }
+  async function stopServer() {
+    await fetch(API + '/stop', { method: 'POST', headers: { 'X-Admin-Key': KEY } }).catch(()=>{});
+    setTimeout(checkStatus, 800);
+  }
+  async function restartServer() {
+    await fetch(API + '/restart', { method: 'POST', headers: { 'X-Admin-Key': KEY } }).catch(()=>{});
+    setTimeout(checkStatus, 2000);
+    setTimeout(checkStatus, 5000);
+  }
+
+  function copyNgrok() {
+    const url = document.getElementById('ngrok-link').href;
+    if (!url || url === '#') return;
+    navigator.clipboard.writeText(url).then(() => {
+      const btn = document.getElementById('copy-btn');
+      btn.textContent = 'OK!';
+      setTimeout(() => btn.textContent = 'COPY', 1500);
+    });
+  }
+
+  function pad(n) { return String(n).padStart(2,'0'); }
+
+  checkStatus();
+  setInterval(checkStatus, 5000);
+  setInterval(tickUptime, 1000);
+
+  // PWA
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/nova/launcher-sw.js');
+  }
+
+  let deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredPrompt = e;
+    document.getElementById('install-btn').style.display = 'inline-block';
+  });
+  document.getElementById('install-btn').addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    document.getElementById('install-btn').style.display = 'none';
+  });
+  window.addEventListener('appinstalled', () => {
+    document.getElementById('install-btn').style.display = 'none';
+  });
+
+</script>
+</body>
+</html>
