@@ -219,6 +219,7 @@
   <span style="color:#444;font-size:11px">ngrok:</span>
   <a class="ngrok-url" id="ngrok-link" href="#" target="_blank">загрузка...</a>
   <button class="copy-btn" id="copy-btn" onclick="copyNgrok()">COPY</button>
+  <button class="copy-btn" id="share-btn" onclick="shareNova()" style="border-color:#00ff9d;color:#00ff9d;display:none">SHARE</button>
 </div>
 
 <script>
@@ -279,8 +280,14 @@
       const el = document.getElementById('ngrok-link');
       document.getElementById('dot-ngrok').className = 'dot ' + (url ? 'on' : 'off');
       document.getElementById('val-ngrok').textContent = url ? 'online' : 'offline';
-      if (url) { el.textContent = url; el.href = url + '/nova/'; }
-      else { el.textContent = 'не запущен'; el.href = '#'; }
+      const shareBtn = document.getElementById('share-btn');
+      if (url) {
+        el.textContent = url; el.href = url + '/nova/';
+        if (shareBtn) shareBtn.style.display = '';
+      } else {
+        el.textContent = 'не запущен'; el.href = '#';
+        if (shareBtn) shareBtn.style.display = 'none';
+      }
     } catch {}
   }
 
@@ -305,6 +312,22 @@
       const btn = document.getElementById('copy-btn');
       btn.textContent = 'OK!';
       setTimeout(() => btn.textContent = 'COPY', 1500);
+    });
+  }
+
+  async function shareNova() {
+    const url = document.getElementById('ngrok-link').href;
+    if (!url || url === '#') return;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'Nova Studio', text: 'Открой Nova Studio', url });
+        return;
+      } catch {}
+    }
+    navigator.clipboard.writeText(url).then(() => {
+      const btn = document.getElementById('share-btn');
+      btn.textContent = 'Скопировано!';
+      setTimeout(() => btn.textContent = 'SHARE', 2000);
     });
   }
 
