@@ -375,6 +375,7 @@ async function handleChat(action, req, res) {
 // ────────────────────────────────────────────────────────────────────────────
 
 const server = http.createServer(async (req, res) => {
+  console.log(`[REQ] ${req.method} ${req.url}`);
   const { pathname } = url.parse(req.url);
 
   if (req.method === 'OPTIONS') {
