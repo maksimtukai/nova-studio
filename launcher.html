@@ -62,7 +62,7 @@
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
       gap: 16px;
       max-width: 700px;
       width: 100%;
@@ -149,6 +149,19 @@
 </head>
 <body>
 
+<!-- Key dialog -->
+<div id="key-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#1a1a2e;border:1px solid #a855f7;border-radius:12px;padding:28px 24px;width:320px;max-width:90vw;">
+    <div style="color:#e2e8f0;font-size:14px;margin-bottom:14px;">Введите ключ администратора:</div>
+    <input id="key-input" type="password" autocomplete="current-password"
+      style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:8px;border:1px solid #a855f7;background:#0f0f1a;color:#e2e8f0;font-size:15px;outline:none;">
+    <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end;">
+      <button onclick="keyModalCancel()" style="padding:8px 18px;border-radius:8px;border:1px solid #555;background:transparent;color:#aaa;cursor:pointer;">Отмена</button>
+      <button onclick="keyModalOk()" style="padding:8px 18px;border-radius:8px;border:none;background:#a855f7;color:#fff;cursor:pointer;font-weight:600;">OK</button>
+    </div>
+  </div>
+</div>
+
 <div class="logo">NOVA</div>
 <div class="subtitle">Studio Launcher</div>
 
@@ -206,6 +219,12 @@
     <span class="card-desc">Лог серверных ошибок</span>
     <span class="card-badge">errors</span>
   </a>
+  <a class="card" href="http://localhost:43219/nova/keys.html" target="_blank" style="--c:#facc15">
+    <span class="card-icon">🔑</span>
+    <span class="card-name">Ключи</span>
+    <span class="card-desc">Хранилище API-ключей</span>
+    <span class="card-badge">vault</span>
+  </a>
 </div>
 
 <div class="actions">
@@ -236,9 +255,38 @@
       </div>`;
   }
 
-  const API = 'http://localhost:8093/api';
-  const KEY = '1234567890';
+  const API = window.location.origin + '/api';
+  let adminKey = '';
   let serverStartTime = null;
+
+  function getKey() {
+    if (adminKey) return adminKey;
+    adminKey = sessionStorage.getItem('nova_launcher_key') || '';
+    return adminKey;
+  }
+
+  let _keyResolve = null;
+  function promptKey() {
+    return new Promise(resolve => {
+      _keyResolve = resolve;
+      const modal = document.getElementById('key-modal');
+      const inp = document.getElementById('key-input');
+      modal.style.display = 'flex';
+      inp.value = '';
+      setTimeout(() => inp.focus(), 50);
+      inp.onkeydown = e => { if (e.key === 'Enter') keyModalOk(); if (e.key === 'Escape') keyModalCancel(); };
+    });
+  }
+  function keyModalOk() {
+    const k = document.getElementById('key-input').value.trim();
+    document.getElementById('key-modal').style.display = 'none';
+    if (k) { adminKey = k; sessionStorage.setItem('nova_launcher_key', k); }
+    if (_keyResolve) { _keyResolve(k || null); _keyResolve = null; }
+  }
+  function keyModalCancel() {
+    document.getElementById('key-modal').style.display = 'none';
+    if (_keyResolve) { _keyResolve(null); _keyResolve = null; }
+  }
 
   function tickUptime() {
     if (!serverStartTime) return;
@@ -255,7 +303,7 @@
 
   async function checkStatus() {
     try {
-      const r = await fetchWithTimeout(API + '/status', { headers: { 'X-Admin-Key': KEY } });
+      const r = await fetchWithTimeout(API + '/public-status', {});
       const d = await r.json();
       const on = d.running;
       document.getElementById('dot-srv').className = 'dot ' + (on ? 'on' : 'off');
@@ -271,11 +319,13 @@
       document.getElementById('dot-srv').className = 'dot off';
       document.getElementById('val-srv').textContent = 'недоступен';
     }
+  }
 
+  async function checkNgrok() {
     try {
-      const r2 = await fetchWithTimeout(API + '/ngrok', { headers: { 'X-Admin-Key': KEY } });
-      const d2 = await r2.json();
-      const url = d2.url;
+      const r = await fetchWithTimeout(API + '/public-ngrok', {}, 4000);
+      const d = await r.json();
+      const url = d.url;
       const el = document.getElementById('ngrok-link');
       document.getElementById('dot-ngrok').className = 'dot ' + (url ? 'on' : 'off');
       document.getElementById('val-ngrok').textContent = url ? 'online' : 'offline';
@@ -284,19 +334,18 @@
     } catch {}
   }
 
-  async function startServer() {
-    await fetch(API + '/start', { method: 'POST', headers: { 'X-Admin-Key': KEY } }).catch(()=>{});
-    setTimeout(checkStatus, 800);
+  async function apiAction(path) {
+    const key = getKey() || await promptKey();
+    if (!key) return;
+    try {
+      const r = await fetchWithTimeout(API + path, { method: 'POST', headers: { 'X-Admin-Key': key } });
+      if (r.status === 401) { adminKey = ''; sessionStorage.removeItem('nova_launcher_key'); alert('Неверный ключ'); }
+    } catch { alert('Control API недоступен'); }
   }
-  async function stopServer() {
-    await fetch(API + '/stop', { method: 'POST', headers: { 'X-Admin-Key': KEY } }).catch(()=>{});
-    setTimeout(checkStatus, 800);
-  }
-  async function restartServer() {
-    await fetch(API + '/restart', { method: 'POST', headers: { 'X-Admin-Key': KEY } }).catch(()=>{});
-    setTimeout(checkStatus, 2000);
-    setTimeout(checkStatus, 5000);
-  }
+
+  async function startServer()   { await apiAction('/start');   setTimeout(checkStatus, 800); }
+  async function stopServer()    { await apiAction('/stop');    setTimeout(checkStatus, 800); }
+  async function restartServer() { await apiAction('/restart'); setTimeout(checkStatus, 2000); setTimeout(checkStatus, 5000); }
 
   function copyNgrok() {
     const url = document.getElementById('ngrok-link').href;
@@ -311,7 +360,9 @@
   function pad(n) { return String(n).padStart(2,'0'); }
 
   checkStatus();
+  checkNgrok();
   setInterval(checkStatus, 5000);
+  setInterval(checkNgrok, 20000);
   setInterval(tickUptime, 1000);
 
   // PWA

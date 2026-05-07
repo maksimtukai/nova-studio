@@ -1,19 +1,45 @@
 {
   "name": "Nova Studio",
   "short_name": "Nova",
-  "description": "Nova Studio mobile web app",
+  "description": "Nova Studio — личный кабинет клиента",
   "start_url": "/nova/index.html",
   "scope": "/nova/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#09101d",
   "theme_color": "#09101d",
   "lang": "ru",
   "icons": [
     {
+      "src": "/nova/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/nova/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/nova/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/nova/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
       "src": "/nova/app-icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
-  ]
+  ],
+  "categories": ["business", "productivity"]
 }

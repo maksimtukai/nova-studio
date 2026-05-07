@@ -339,6 +339,7 @@ if (query.get("registered") === "1" && loginMessage) {
 if (query.get("logged") === "1") {
   const session = getSessionUser();
   if (session) {
-    alert("Добро пожаловать, " + session.name + "!");
+    const sections = document.getElementById("logged-sections");
+    if (sections) sections.style.display = "block";
   }
 }

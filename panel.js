@@ -2,9 +2,9 @@ const USERS_STORAGE_KEY = "nova_users";
 const SESSION_STORAGE_KEY = "nova_session";
 const PANEL_KEY_STORAGE_KEY = "nova_panel_admin_key";
 const API_BASES = Array.from(new Set([
-  `http://${window.location.hostname}:8093/api`,
-  "http://127.0.0.1:8093/api",
-  "http://localhost:8093/api"
+  `http://${window.location.hostname}:43219/api`,
+  "http://127.0.0.1:43219/api",
+  "http://localhost:43219/api"
 ]));
 const FIELD_ICONS = {
   adminKey: "🛡️",
@@ -169,15 +169,14 @@ function wireLiveValidation(form, messageNode, validator) {
 }
 
 function switchTab(tab) {
-  const nextTab = tab === "register" ? "login" : tab;
   tabs.forEach((button) => {
-    button.classList.toggle("is-active", button.dataset.tab === nextTab);
+    button.classList.toggle("is-active", button.dataset.tab === tab);
   });
   if (loginForm) {
-    loginForm.classList.toggle("is-hidden", nextTab !== "login");
+    loginForm.classList.toggle("is-hidden", tab !== "login");
   }
   if (registerForm) {
-    registerForm.classList.add("is-hidden");
+    registerForm.classList.toggle("is-hidden", tab !== "register");
   }
 }
 
@@ -384,22 +383,9 @@ loginForm.addEventListener("submit", async (event) => {
 
   saveAdminKey(adminKey);
   saveSession(found);
-  try {
-    await apiFetch("status");
-    await fetchServerStatus();
-    setMessage(loginMessage, "Вход выполнен.", "is-success");
-    togglePanelVisibility();
-  } catch (e) {
-    // Не стираем ключ при недоступном API — пусть пользователь сможет повторить попытку,
-    // когда Control API будет запущен.
-    const msg = String(e && e.message ? e.message : "");
-    if (msg.includes("Control API недоступен")) {
-      setMessage(loginMessage, msg, "is-error");
-    } else {
-      sessionStorage.removeItem(PANEL_KEY_STORAGE_KEY);
-      setMessage(loginMessage, "Неверный ключ администратора.", "is-error");
-    }
-  }
+  setMessage(loginMessage, "Вход выполнен.", "is-success");
+  togglePanelVisibility();
+  fetchServerStatus().catch(() => {});
 });
 
 startBtn.addEventListener("click", () => sendAction("start"));
@@ -408,11 +394,6 @@ refreshBtn.addEventListener("click", fetchServerStatus);
 
 togglePanelVisibility();
 if (isAuthorized()) {
-  apiFetch("status")
-    .then(() => fetchServerStatus())
-    .catch(() => {
-      sessionStorage.removeItem(PANEL_KEY_STORAGE_KEY);
-      togglePanelVisibility();
-    });
+  fetchServerStatus().catch(() => {});
 }
 

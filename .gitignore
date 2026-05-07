@@ -1,4 +1,6 @@
 node_modules/
+.env
+server.url
 *.pid
 .server-8090.pid
 .control-api-8093.pid

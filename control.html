@@ -267,6 +267,8 @@
   <span class="stat-label">ngrok:</span>
   <span class="indicator" id="ngrok-ind"></span>
   <a id="ngrok-url" href="#" target="_blank">—</a>
+  <button class="btn" id="ngrok-copy-btn" onclick="copyNgrok()" style="display:none;margin-left:8px;padding:2px 8px;font-size:11px">COPY</button>
+  <button class="btn btn-yellow" id="btn-newip" onclick="newIp()" style="margin-left:6px;padding:2px 8px;font-size:11px" disabled>NEW IP</button>
 </div>
 
 <div id="timer-widget">
@@ -285,7 +287,6 @@
 <script>
   const API    = 'http://localhost:8093/api';
   const LOG_URL = '/nova/visitors.log';
-  const CORRECT_KEY = '1234567890';
 
   let adminKey      = '';
   let sinceIndex    = 0;
@@ -300,10 +301,14 @@
   let isConnected = false;
 
   /* ── AUTH ── */
-  function connect() {
+  async function connect() {
     adminKey = document.getElementById('keyInput').value.trim();
     if (!adminKey) { msg('введите ключ'); return; }
-    if (adminKey !== CORRECT_KEY) { msg('неверный ключ'); return; }
+    try {
+      const res = await fetch(`${API}/status`, { headers: { 'X-Admin-Key': adminKey } });
+      if (res.status === 401 || res.status === 403) { msg('неверный ключ'); adminKey = ''; return; }
+      if (!res.ok) { msg('ошибка сервера'); adminKey = ''; return; }
+    } catch { msg('control-api недоступен'); adminKey = ''; return; }
     msg('');
     isConnected = true;
     sinceIndex = 0; allEntries = []; seenIPs = new Set();

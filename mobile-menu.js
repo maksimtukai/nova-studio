@@ -41,8 +41,6 @@
 
   document.querySelectorAll(".nav").forEach((nav) => {
     setupNav(nav);
-    requestAnimationFrame(() => {
-      nav.classList.add("nav-ready");
-    });
+    nav.classList.add("nav-ready");
   });
 })();

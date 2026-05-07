@@ -14,8 +14,304 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css?v=6">
+  <style>
+    .hero-main {
+      position: relative;
+      min-height: 90vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      gap: 40px;
+      overflow: hidden;
+      padding: 40px 0;
+    }
+    .hero-form-wrap {
+      position: relative;
+      z-index: 1;
+    }
+    .hero-form-wrap .auth-card {
+      margin: 0;
+    }
+    @media (max-width: 768px) {
+      .hero-main { grid-template-columns: 1fr; }
+    }
+    #hero-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      text-align: left;
+      padding: 40px 0;
+    }
+    .hero-tag {
+      font-size: 12px;
+      letter-spacing: 4px;
+      color: #7cf0c8;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+      opacity: 0.8;
+    }
+    .hero-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(52px, 9vw, 110px);
+      font-weight: 700;
+      line-height: 1.0;
+      color: #fff;
+      margin-bottom: 28px;
+      letter-spacing: -2px;
+    }
+    .hero-accent {
+      color: #7cf0c8;
+      text-shadow: 0 0 60px rgba(124,240,200,0.4);
+    }
+    .hero-sub {
+      font-size: 16px;
+      color: #6b7ea8;
+      line-height: 1.7;
+      margin-bottom: 40px;
+    }
+    .hero-btns {
+      display: flex;
+      gap: 14px;
+      justify-content: flex-start;
+      flex-wrap: wrap;
+    }
+    .hero-btn-main {
+      background: #7cf0c8;
+      color: #09101d;
+      padding: 14px 36px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 15px;
+      text-decoration: none;
+      transition: all .2s;
+      letter-spacing: 0.5px;
+    }
+    .hero-btn-main:hover { background: #5de0b3; transform: translateY(-2px); }
+    .hero-btn-ghost {
+      background: transparent;
+      color: #7cf0c8;
+      padding: 14px 36px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 15px;
+      text-decoration: none;
+      border: 1px solid rgba(124,240,200,0.3);
+      transition: all .2s;
+    }
+    .hero-btn-ghost:hover { border-color: #7cf0c8; background: rgba(124,240,200,0.06); }
+
+    /* Статистика — glassmorphism */
+    .stats-row {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+      padding: 40px 0 10px;
+    }
+    .stat-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 28px 36px;
+      text-align: center;
+      min-width: 150px;
+      transition: transform .2s, border-color .2s;
+    }
+    .stat-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(124,240,200,0.35);
+    }
+    .stat-num {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 42px;
+      font-weight: 700;
+      color: #7cf0c8;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: #6b7ea8;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* Бегущая строка */
+    .ticker-wrap {
+      overflow: hidden;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding: 14px 0;
+      margin: 32px 0 0;
+      mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+      -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+    }
+    .ticker-track {
+      display: flex;
+      gap: 0;
+      width: max-content;
+      animation: ticker 28s linear infinite;
+    }
+    .ticker-track:hover { animation-play-state: paused; }
+    @keyframes ticker {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+    .ticker-item {
+      padding: 0 32px;
+      font-size: 13px;
+      color: #4b5563;
+      font-weight: 600;
+      letter-spacing: 1px;
+      white-space: nowrap;
+      transition: color .2s;
+    }
+    .ticker-item:hover { color: #7cf0c8; }
+
+    /* Nova Space */
+    .nova-space-section {
+      padding: 60px 0 20px;
+    }
+    .nova-space-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(124,240,200,0.15);
+      border-radius: 24px;
+      padding: 52px 52px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .nova-space-card::before {
+      content: '';
+      position: absolute;
+      top: -80px; left: -80px;
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, rgba(124,240,200,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .nova-space-badge {
+      display: inline-block;
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #7cf0c8;
+      border: 1px solid rgba(124,240,200,0.3);
+      border-radius: 20px;
+      padding: 4px 14px;
+      margin-bottom: 20px;
+    }
+    .nova-space-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(26px, 3vw, 38px);
+      font-weight: 700;
+      line-height: 1.2;
+      color: #edf2ff;
+      margin-bottom: 16px;
+    }
+    .nova-space-accent { color: #7cf0c8; }
+    .nova-space-text {
+      font-size: 15px;
+      color: #6b7ea8;
+      line-height: 1.7;
+      margin-bottom: 8px;
+    }
+    .nova-space-features {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .nsf-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 14px;
+      padding: 16px 20px;
+      transition: border-color .2s, transform .2s;
+    }
+    .nsf-item:hover {
+      border-color: rgba(124,240,200,0.25);
+      transform: translateX(4px);
+    }
+    .nsf-icon { font-size: 24px; flex-shrink: 0; margin-top: 2px; }
+    .nsf-title { font-size: 14px; font-weight: 700; color: #edf2ff; margin-bottom: 4px; }
+    .nsf-desc  { font-size: 12px; color: #4b5563; line-height: 1.5; }
+
+    @media (max-width: 700px) {
+      .nova-space-card { grid-template-columns: 1fr; padding: 32px 24px; }
+    }
+
+    /* Nova Vision */
+    .nova-vision-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      align-items: center;
+      padding: 80px 0 40px;
+    }
+    .nova-vision-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(32px, 4vw, 58px);
+      font-weight: 700;
+      line-height: 1.1;
+      color: #edf2ff;
+      margin-bottom: 20px;
+      letter-spacing: -1px;
+    }
+    .nova-vision-text {
+      font-size: 16px;
+      color: #6b7ea8;
+      line-height: 1.8;
+      margin-bottom: 28px;
+      max-width: 440px;
+    }
+    .nova-vision-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .nvp {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 16px;
+      border-radius: 20px;
+      border: 1px solid rgba(124,240,200,0.25);
+      color: #7cf0c8;
+      background: rgba(124,240,200,0.05);
+      letter-spacing: 0.5px;
+    }
+    .nova-vision-right {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #nova-sphere {
+      width: 100%;
+      max-width: 420px;
+      height: auto;
+      aspect-ratio: 1;
+    }
+    @media (max-width: 700px) {
+      .nova-vision-section { grid-template-columns: 1fr; }
+      .nova-vision-right { order: -1; }
+      #nova-sphere { max-width: 280px; }
+    }
+  </style>
 </head>
 <body>
+  <div id="scroll-progress"></div>
   <div class="page-shell">
     <header class="hero">
       <nav class="nav">
@@ -27,12 +323,23 @@
           <a id="loginLink" class="login-icon-btn" href="login.html" title="Вход">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
           </a>
-          <div id="userChip" class="user-chip is-hidden">
-            <span class="user-avatar-wrap">
-              <span id="userIcon" class="user-icon"></span>
-              <span class="user-online-dot"></span>
-            </span>
-            <span id="userName" class="user-name"></span>
+          <div class="profile-wrap">
+            <div id="userChip" class="user-chip is-hidden">
+              <span class="user-avatar-wrap">
+                <span id="userIcon" class="user-icon"></span>
+                <span class="user-online-dot"></span>
+              </span>
+              <span id="userName" class="user-name"></span>
+            </div>
+            <div id="profileDropdown" class="profile-dropdown">
+              <div class="profile-dropdown-header">
+                <div class="pd-name" id="pd-name">—</div>
+                <div class="pd-email" id="pd-email">—</div>
+              </div>
+              <a class="pd-item" href="#"><span class="pd-icon">⚙️</span>Настройки</a>
+              <a class="pd-item" href="#"><span class="pd-icon">📁</span>Мои проекты</a>
+              <div class="pd-item pd-danger" id="logoutBtn"><span class="pd-icon">🚪</span>Выход</div>
+            </div>
           </div>
         </div>
         <button class="nav-install install-app-trigger" type="button">Скачать приложение</button>
@@ -42,74 +349,397 @@
         </div>
       </nav>
 
-      <div class="hero-grid">
-        <section class="hero-copy">
-          <p class="eyebrow">Дизайн. Код. Запуск.</p>
-          <h1>Сайт, который выглядит смело и работает быстро.</h1>
-          <p class="hero-text">
-            Современный лендинг для бренда, продукта или портфолио с яркой подачей,
-            мобильной адаптацией и аккуратной анимацией.
-          </p>
-          <div class="hero-actions">
-            <button id="installAppBtn" class="btn-primary install-app-trigger" type="button">📱 Скачать приложение</button>
+      <!-- HERO SECTION -->
+      <div class="hero-main">
+        <canvas id="hero-canvas"></canvas>
+        <div class="hero-content">
+          <div class="hero-tag">Дизайн · Код · Запуск</div>
+          <h1 class="hero-title">Создаём<br><span class="hero-accent">цифровые</span><br>шедевры</h1>
+          <p class="hero-sub">Современные сайты, которые работают быстро,<br>выглядят смело и приносят результат.</p>
+        </div>
+        <div class="hero-form-wrap">
+          <section class="auth-card" aria-label="Регистрация">
+            <p class="auth-meta">
+              Уже есть аккаунт? <a class="auth-link" href="login.html">Вход</a>
+            </p>
+            <form id="registerForm" class="auth-form">
+              <h2>Регистрация</h2>
+              <label class="field">
+                <span>Имя</span>
+                <input type="text" name="name" placeholder="Ваше имя" required>
+              </label>
+              <label class="field">
+                <span>Email</span>
+                <input type="email" name="email" placeholder="you@mail.com" required>
+              </label>
+              <label class="field">
+                <span>Пароль</span>
+                <input type="password" name="password" minlength="6" placeholder="Минимум 6 символов" required>
+              </label>
+              <label class="field">
+                <span>Повторите пароль</span>
+                <input type="password" name="confirmPassword" minlength="6" placeholder="Повторите пароль" required>
+              </label>
+              <button class="btn-primary" type="submit">Зарегистрироваться</button>
+              <p class="form-message" id="registerMessage"></p>
+            </form>
+          </section>
+        </div>
+      </div>
+
+      <!-- СЕКЦИИ ПОСЛЕ ВХОДА -->
+      <div id="logged-sections" style="display:none">
+
+        <!-- Статистика -->
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-num">1</div>
+            <div class="stat-label">проектов</div>
           </div>
-        </section>
+          <div class="stat-card">
+            <div class="stat-num">3</div>
+            <div class="stat-label">месяца опыта</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num">100%</div>
+            <div class="stat-label">довольных клиентов</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num">24/7</div>
+            <div class="stat-label">поддержка</div>
+          </div>
+        </div>
 
-        <section class="auth-card" aria-label="Регистрация">
-          <p class="auth-meta">
-            Уже есть аккаунт? <a class="auth-link" href="login.html">Вход</a>
-          </p>
-
-          <form id="registerForm" class="auth-form">
-            <h2>Регистрация</h2>
-            <label class="field">
-              <span>Имя</span>
-              <input type="text" name="name" placeholder="Ваше имя" required>
-            </label>
-            <label class="field">
-              <span>Email</span>
-              <input type="email" name="email" placeholder="you@mail.com" required>
-            </label>
-            <label class="field">
-              <span>Пароль</span>
-              <input type="password" name="password" minlength="6" placeholder="Минимум 6 символов" required>
-            </label>
-            <label class="field">
-              <span>Повторите пароль</span>
-              <input type="password" name="confirmPassword" minlength="6" placeholder="Повторите пароль" required>
-            </label>
-            <button class="btn-primary" type="submit">Зарегистрироваться</button>
-            <p class="form-message" id="registerMessage"></p>
-          </form>
-        </section>
 
       </div>
+
+      <!-- Nova Vision блок -->
+      <div class="nova-vision-section">
+        <div class="nova-vision-left">
+          <div class="nova-space-badge" style="margin-bottom:20px">Nova Vision</div>
+          <h2 class="nova-vision-title">Зажигаем<br><span class="nova-space-accent">цифровые</span><br>звёзды.</h2>
+          <p class="nova-vision-text">Мы не просто делаем сайты — мы создаём новые стандарты взаимодействия. Nova — это взрыв креатива и точность кода.</p>
+          <div class="nova-vision-pills">
+            <span class="nvp">⚡ Скорость</span>
+            <span class="nvp">🎯 Точность</span>
+            <span class="nvp">🔥 Креатив</span>
+            <span class="nvp">🌐 Масштаб</span>
+          </div>
+        </div>
+        <div class="nova-vision-right">
+          <canvas id="nova-sphere" width="420" height="420"></canvas>
+        </div>
+      </div>
+
+      <!-- Nova Space блок -->
+      <div class="nova-space-section">
+        <div class="nova-space-card">
+          <div class="nova-space-left">
+            <div class="nova-space-badge">Nova Space</div>
+            <h2 class="nova-space-title">Твой личный кабинет<br>в <span class="nova-space-accent">Nova Space</span></h2>
+            <p class="nova-space-text">Отслеживай этапы разработки своего проекта в реальном времени, общайся с командой и храни все документы в одном месте.</p>
+          </div>
+          <div class="nova-space-right">
+            <div class="nova-space-features">
+              <div class="nsf-item">
+                <span class="nsf-icon">📊</span>
+                <div>
+                  <div class="nsf-title">Прогресс проекта</div>
+                  <div class="nsf-desc">Видишь каждый этап разработки в реальном времени</div>
+                </div>
+              </div>
+              <div class="nsf-item">
+                <span class="nsf-icon">💬</span>
+                <div>
+                  <div class="nsf-title">Чат с командой</div>
+                  <div class="nsf-desc">Прямая связь с разработчиками без лишних звонков</div>
+                </div>
+              </div>
+              <div class="nsf-item">
+                <span class="nsf-icon">📁</span>
+                <div>
+                  <div class="nsf-title">Все документы</div>
+                  <div class="nsf-desc">Договоры, макеты и исходники в одном хранилище</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </header>
 
-    <main class="site-sections">
-      <section class="site-section" id="services">
-        <h2>Услуги</h2>
-        <p>Мы создаём современные лендинги, корпоративные сайты и админ-панели с акцентом на быстрый запуск и удобное управление.</p>
-      </section>
-      <section class="site-section" id="portfolio">
-        <h2>Портфолио</h2>
-        <p>Показываем лучшие проекты, где дизайн, контент и структура работают на конверсию.</p>
-      </section>
-      <section class="site-section" id="pricing">
-        <h2>Цены</h2>
-        <p>Прозрачные тарифы на создание сайта, поддержку и доработки без скрытых платежей.</p>
-      </section>
-      <section class="site-section" id="contacts">
-        <h2>Контакты</h2>
-        <p>Свяжитесь с нами для быстрого запуска проекта и получения коммерческого предложения.</p>
-      </section>
-    </main>
   </div>
 
+  <script>
+  // Сфера Nova Vision
+  (function() {
+    const canvas = document.getElementById('nova-sphere');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    const cx = W / 2, cy = H / 2;
+    let t = 0;
+
+    // Точки на сфере
+    const pts = [];
+    const N = 320;
+    for (let i = 0; i < N; i++) {
+      const phi   = Math.acos(1 - 2 * (i + 0.5) / N);
+      const theta = Math.PI * (1 + Math.sqrt(5)) * i;
+      pts.push({
+        ox: Math.sin(phi) * Math.cos(theta),
+        oy: Math.sin(phi) * Math.sin(theta),
+        oz: Math.cos(phi),
+        pulse: Math.random() * Math.PI * 2
+      });
+    }
+
+    // Вылетающие частицы (взрыв)
+    const sparks = Array.from({ length: 60 }, () => ({
+      angle: Math.random() * Math.PI * 2,
+      speed: 0.4 + Math.random() * 1.2,
+      r: 80 + Math.random() * 120,
+      life: Math.random(),
+      size: 0.8 + Math.random() * 1.6,
+      col: Math.random() > 0.5 ? '124,240,200' : '160,120,255'
+    }));
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      t += 0.008;
+
+      const rotY = t * 0.7;
+      const rotX = Math.sin(t * 0.3) * 0.25;
+      const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+      const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+
+      // Ядро — glow
+      const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, 90);
+      grd.addColorStop(0,   'rgba(124,240,200,0.22)');
+      grd.addColorStop(0.4, 'rgba(100,80,255,0.12)');
+      grd.addColorStop(1,   'transparent');
+      ctx.beginPath();
+      ctx.arc(cx, cy, 90, 0, Math.PI * 2);
+      ctx.fillStyle = grd;
+      ctx.fill();
+
+      // Вращающиеся точки сферы
+      const projected = pts.map(p => {
+        // Поворот по Y
+        const x1 = p.ox * cosY - p.oz * sinY;
+        const z1 = p.ox * sinY + p.oz * cosY;
+        // Поворот по X
+        const y1 = p.oy * cosX - z1 * sinX;
+        const z2 = p.oy * sinX + z1 * cosX;
+        const scale = 150 / (3 + z2);
+        const brightness = (z2 + 1) / 2;
+        const pulse = 0.5 + 0.5 * Math.sin(t * 3 + p.pulse);
+        return {
+          x: cx + x1 * scale,
+          y: cy + y1 * scale,
+          z: z2,
+          a: brightness * (0.5 + 0.5 * pulse),
+          r: 1 + brightness * 1.2
+        };
+      });
+
+      projected.sort((a, b) => a.z - b.z);
+      projected.forEach(p => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        const g = Math.floor(200 + p.z * 55);
+        ctx.fillStyle = `rgba(${Math.floor(80 + p.z*44)},${g},${Math.floor(180 + p.z*60)},${p.a})`;
+        ctx.fill();
+      });
+
+      // Вылетающие искры
+      sparks.forEach(s => {
+        s.life += 0.004 * s.speed;
+        if (s.life > 1) s.life = 0;
+        const dist = s.r * s.life;
+        const x = cx + Math.cos(s.angle) * dist;
+        const y = cy + Math.sin(s.angle) * dist;
+        const a = Math.max(0, 1 - s.life * 1.4);
+        ctx.beginPath();
+        ctx.arc(x, y, s.size * (1 - s.life * 0.5), 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${s.col},${a.toFixed(2)})`;
+        ctx.fill();
+      });
+
+      // Внешнее кольцо
+      ctx.beginPath();
+      ctx.arc(cx, cy, 160 + Math.sin(t) * 4, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(124,240,200,${0.06 + 0.04 * Math.sin(t * 2)})`;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      requestAnimationFrame(draw);
+    }
+    draw();
+  })();
+
+  // Полоска прокрутки
+  (function() {
+    const bar = document.getElementById('scroll-progress');
+    window.addEventListener('scroll', () => {
+      const total = document.documentElement.scrollHeight - window.innerHeight;
+      bar.style.width = (total > 0 ? (window.scrollY / total) * 100 : 0) + '%';
+    }, { passive: true });
+  })();
+
+  // Дропдаун профиля
+  (function() {
+    const chip = document.getElementById('userChip');
+    const dropdown = document.getElementById('profileDropdown');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    if (!chip || !dropdown) return;
+
+    function fillDropdown() {
+      const n  = document.getElementById('pd-name');
+      const em = document.getElementById('pd-email');
+      // Берём имя прямо из уже отрендеренного чипа
+      const chipName = (document.getElementById('userName')?.textContent || '').trim();
+      if (n) n.textContent = chipName || '—';
+      // Email из sessionStorage
+      try {
+        const s = JSON.parse(sessionStorage.getItem('nova_session') || 'null');
+        if (em) em.textContent = (s && s.email) ? s.email : '';
+      } catch {
+        if (em) em.textContent = '';
+      }
+    }
+
+    chip.addEventListener('click', e => {
+      e.stopPropagation();
+      fillDropdown();
+      dropdown.classList.toggle('is-open');
+    });
+
+    document.addEventListener('click', () => dropdown.classList.remove('is-open'));
+    dropdown.addEventListener('click', e => e.stopPropagation());
+
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => {
+        sessionStorage.removeItem('nova_session');
+        window.location.href = 'login.html';
+      });
+    }
+  })();
+
+  // Фонарик курсора + плавающие glow-пятна
+  (function() {
+    // Фонарик — обновляем CSS-переменные мыши
+    document.addEventListener('mousemove', e => {
+      document.documentElement.style.setProperty('--mouse-x', e.clientX + 'px');
+      document.documentElement.style.setProperty('--mouse-y', e.clientY + 'px');
+    });
+
+    // Создаём плавающие glow-пятна
+    const blobs = [
+      { color: '80,120,255', size: 500, x: 15,  y: 20,  dur: 18 },
+      { color: '160,80,255', size: 400, x: 75,  y: 15,  dur: 24 },
+      { color: '80,200,255', size: 350, x: 50,  y: 70,  dur: 20 },
+      { color: '124,240,200',size: 300, x: 85,  y: 60,  dur: 28 },
+    ];
+    blobs.forEach(b => {
+      const el = document.createElement('div');
+      el.className = 'glow-blob';
+      el.style.cssText = `
+        width:${b.size}px; height:${b.size}px;
+        left:calc(${b.x}% - ${b.size/2}px);
+        top:calc(${b.y}% - ${b.size/2}px);
+        background: radial-gradient(circle, rgba(${b.color},0.6) 0%, transparent 70%);
+        animation-duration: ${b.dur}s;
+        animation-delay: -${Math.random()*b.dur}s;
+      `;
+      document.body.appendChild(el);
+    });
+  })();
+  </script>
+  <script>
+  (function() {
+    const canvas = document.getElementById('hero-canvas');
+    const ctx = canvas.getContext('2d');
+    let W, H, mouse = { x: -9999, y: -9999 }, particles = [];
+
+    function resize() {
+      W = canvas.width  = canvas.offsetWidth;
+      H = canvas.height = canvas.offsetHeight;
+    }
+
+    function createParticles() {
+      particles = [];
+      const isMobile = window.innerWidth < 768;
+      const count = Math.floor((W * H) / (isMobile ? 12000 : 4000));
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x: Math.random() * W, y: Math.random() * H,
+          ox: 0, oy: 0,
+          vx: 0, vy: 0,
+          r: Math.random() * 1.5 + 0.4,
+          a: Math.random() * 0.5 + 0.2
+        });
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      particles.forEach(p => {
+        const dx = mouse.x - p.x, dy = mouse.y - p.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const force = Math.max(0, 120 - dist) / 120;
+        p.vx *= 0.85; p.vy *= 0.85;
+        p.x += p.vx; p.y += p.vy;
+        p.x += (Math.random() - 0.5) * 0.3;
+        p.y += (Math.random() - 0.5) * 0.3;
+        if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+        if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(124,240,200,${p.a})`;
+        ctx.fill();
+      });
+
+      // draw lines between close particles
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const dist2 = dx*dx + dy*dy;
+          const maxDist = window.innerWidth < 768 ? 60 : 90;
+          if (dist2 < maxDist * maxDist) {
+            const d = Math.sqrt(dist2);
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.strokeStyle = `rgba(124,240,200,${0.12 * (1 - d/maxDist)})`;
+            ctx.lineWidth = 0.6;
+            ctx.stroke();
+          }
+        }
+      }
+      requestAnimationFrame(draw);
+    }
+
+    window.addEventListener('mousemove', e => {
+      const r = canvas.getBoundingClientRect();
+      mouse.x = e.clientX - r.left;
+      mouse.y = e.clientY - r.top;
+    });
+    window.addEventListener('mouseleave', () => { mouse.x = -9999; mouse.y = -9999; });
+
+    resize(); createParticles(); draw();
+    window.addEventListener('resize', () => { resize(); createParticles(); });
+  })();
+  </script>
   <script src="script.js?v=3"></script>
   <script src="pwa.js"></script>
   <script src="enhancements.js"></script>
   <script src="interactions.js"></script>
   <script src="mobile-menu.js"></script>
+
 </body>
 </html>

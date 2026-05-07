@@ -237,18 +237,33 @@
 </div>
 
 <script>
-  const LOG_URL = 'http://localhost:43219/nova/visitors.log';
-  const CORRECT_KEY = '1234567890';
+  const LOG_URL = '/nova/visitors.log';
+  const API_BASES = ['http://localhost:43219/api', 'http://127.0.0.1:43219/api'];
   let adminKey = '';
   let sinceIndex = 0;
   let pollTimer = null;
   let allEntries = [];
   let seenIPs = new Set();
 
-  function connect() {
-    adminKey = document.getElementById('keyInput').value.trim();
-    if (!adminKey) { showMsg('введите ключ'); return; }
-    if (adminKey !== CORRECT_KEY) { showMsg('неверный ключ'); return; }
+  async function checkKey(key) {
+    for (const base of API_BASES) {
+      try {
+        const r = await fetch(base + '/status', { headers: { 'X-Admin-Key': key } });
+        if (r.ok) return true;
+        if (r.status === 401) return false;
+      } catch {}
+    }
+    return false;
+  }
+
+  async function connect() {
+    const key = document.getElementById('keyInput').value.trim();
+    if (!key) { showMsg('введите ключ'); return; }
+    showMsg('проверка...');
+    const ok = await checkKey(key);
+    if (!ok) { showMsg('неверный ключ'); return; }
+    adminKey = key;
+    localStorage.setItem('nova_visitors_key', key);
     sinceIndex = 0;
     allEntries = [];
     seenIPs = new Set();
@@ -289,7 +304,7 @@
       updateStats();
 
       if (!pollTimer) {
-        pollTimer = setInterval(() => fetchLogs(false), 500);
+        pollTimer = setInterval(() => fetchLogs(false), 150);
       }
     } catch(err) {
       showMsg('ошибка: ' + err.message);
@@ -381,9 +396,6 @@
   // load saved key
   const saved = localStorage.getItem('nova_visitors_key');
   if (saved) { document.getElementById('keyInput').value = saved; }
-  document.getElementById('keyInput').addEventListener('input', () => {
-    localStorage.setItem('nova_visitors_key', document.getElementById('keyInput').value);
-  });
 </script>
 </body>
 </html>

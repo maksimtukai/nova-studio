@@ -1,4 +1,4 @@
-const CACHE_NAME = "nova-cache-v5";
+const CACHE_NAME = "nova-cache-v9";
 const APP_SHELL = [
   "/nova/",
   "/nova/index.html",
@@ -33,12 +33,14 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   const url = event.request.url;
-  // Не перехватываем динамические и бинарные ресурсы
   if (url.includes(".log") || url.includes("/api/") || url.includes("?_=")) return;
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(event.request)
+
+  const isHTML = url.includes(".html") || url.endsWith("/nova/") || url.endsWith("/nova");
+
+  if (isHTML) {
+    // HTML — всегда с сервера, кэш только как запасной
+    event.respondWith(
+      fetch(event.request)
         .then((response) => {
           if (response.ok) {
             const copy = response.clone();
@@ -46,7 +48,21 @@ self.addEventListener("fetch", (event) => {
           }
           return response;
         })
-        .catch(() => caches.match("/nova/index.html"));
-    })
-  );
+        .catch(() => caches.match(event.request))
+    );
+  } else {
+    // Статика (CSS, JS, картинки) — кэш, потом сеть
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        if (cached) return cached;
+        return fetch(event.request).then((response) => {
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          }
+          return response;
+        });
+      })
+    );
+  }
 });

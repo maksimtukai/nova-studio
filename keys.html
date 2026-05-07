@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Keys Vault • Nova</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #09101d;
+      color: #edf2ff;
+      font-family: 'Segoe UI', sans-serif;
+      min-height: 100vh;
+    }
+
+    /* LOGIN */
+    #login-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .login-box {
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 16px;
+      padding: 40px 36px;
+      width: 340px;
+    }
+    .login-box h1 {
+      font-size: 22px;
+      font-weight: 800;
+      color: #7cf0c8;
+      letter-spacing: 2px;
+      margin-bottom: 6px;
+    }
+    .login-box p { font-size: 12px; color: #4b5563; margin-bottom: 28px; }
+    .login-box input {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid #1f2937;
+      color: #edf2ff;
+      font-size: 14px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      outline: none;
+      margin-bottom: 14px;
+    }
+    .login-box input:focus { border-color: #7cf0c8; }
+    .login-box button {
+      width: 100%;
+      background: #7cf0c8;
+      color: #09101d;
+      border: none;
+      border-radius: 8px;
+      padding: 11px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 1px;
+    }
+    .login-box button:hover { background: #5de0b3; }
+    #login-err { font-size: 12px; color: #f87171; margin-top: 10px; min-height: 16px; }
+
+    /* MAIN */
+    #main-screen { display: none; }
+
+    .topbar {
+      background: #111827;
+      border-bottom: 1px solid #1f2937;
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .topbar .logo { font-size: 18px; font-weight: 800; color: #7cf0c8; letter-spacing: 2px; }
+    .topbar .subtitle { font-size: 11px; color: #374151; letter-spacing: 2px; flex: 1; }
+    .topbar .logout-btn {
+      background: transparent;
+      border: 1px solid #374151;
+      color: #6b7280;
+      font-size: 11px;
+      padding: 5px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .topbar .logout-btn:hover { border-color: #f87171; color: #f87171; }
+
+    .container { max-width: 900px; margin: 0 auto; padding: 32px 20px; }
+
+    .add-bar {
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 28px;
+      display: grid;
+      grid-template-columns: 1fr 2fr 2fr auto;
+      gap: 10px;
+      align-items: end;
+    }
+    .add-bar label { font-size: 11px; color: #4b5563; margin-bottom: 5px; display: block; }
+    .add-bar input, .add-bar textarea {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid #1f2937;
+      color: #edf2ff;
+      font-size: 13px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      outline: none;
+      font-family: inherit;
+      resize: none;
+    }
+    .add-bar input:focus, .add-bar textarea:focus { border-color: #7cf0c8; }
+    .add-bar .add-btn {
+      background: #7cf0c8;
+      color: #09101d;
+      border: none;
+      border-radius: 8px;
+      padding: 9px 20px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .add-bar .add-btn:hover { background: #5de0b3; }
+
+    .section-title {
+      font-size: 11px;
+      color: #374151;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    #keys-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .key-card {
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: grid;
+      grid-template-columns: 160px 1fr auto auto;
+      gap: 12px;
+      align-items: center;
+      animation: fadein .25s ease;
+    }
+    @keyframes fadein { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; } }
+
+    .key-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #7cf0c8;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .key-desc {
+      font-size: 11px;
+      color: #4b5563;
+      margin-top: 2px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .key-value-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+    .key-value {
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      color: #6b7280;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+      cursor: pointer;
+    }
+    .key-value.revealed { color: #a5f3fc; }
+
+    .eye-btn, .copy-btn, .del-btn {
+      background: transparent;
+      border: 1px solid #1f2937;
+      color: #4b5563;
+      font-size: 13px;
+      padding: 5px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all .15s;
+      white-space: nowrap;
+    }
+    .eye-btn:hover  { border-color: #a5f3fc; color: #a5f3fc; }
+    .copy-btn:hover { border-color: #7cf0c8; color: #7cf0c8; }
+    .del-btn:hover  { border-color: #f87171; color: #f87171; }
+
+    .btn-group { display: flex; gap: 6px; }
+
+    .empty-msg {
+      text-align: center;
+      color: #1f2937;
+      font-size: 13px;
+      padding: 48px;
+      letter-spacing: 2px;
+    }
+
+    @media (max-width: 640px) {
+      .add-bar { grid-template-columns: 1fr; }
+      .key-card { grid-template-columns: 1fr auto; grid-template-rows: auto auto; }
+      .key-value-wrap { grid-column: 1 / -1; }
+      .btn-group { grid-column: 1 / -1; justify-content: flex-end; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <h1>VAULT</h1>
+    <p>Nova Keys Storage</p>
+    <input type="password" id="vault-pass" placeholder="Мастер-пароль" autocomplete="current-password">
+    <button onclick="doLogin()">ВОЙТИ</button>
+    <div id="login-err"></div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main-screen">
+  <div class="topbar">
+    <span class="logo">VAULT</span>
+    <span class="subtitle">NOVA KEYS STORAGE</span>
+    <button class="logout-btn" onclick="doLogout()">ВЫЙТИ</button>
+  </div>
+
+  <div class="container">
+    <div class="add-bar">
+      <div>
+        <label>Название</label>
+        <input type="text" id="new-name" placeholder="OpenRouter">
+      </div>
+      <div>
+        <label>Ключ / значение</label>
+        <input type="text" id="new-value" placeholder="sk-or-v1-...">
+      </div>
+      <div>
+        <label>Описание (необязательно)</label>
+        <input type="text" id="new-desc" placeholder="Для чего используется">
+      </div>
+      <div>
+        <label>&nbsp;</label>
+        <button class="add-btn" onclick="addKey()">+ ДОБАВИТЬ</button>
+      </div>
+    </div>
+
+    <div class="section-title">Сохранённые ключи</div>
+    <div id="keys-list">
+      <div class="empty-msg">// хранилище пустое</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const VAULT_PASS_KEY  = 'nova_vault_pass';
+  const VAULT_DATA_KEY  = 'nova_vault_data';
+  let vaultPass = '';
+
+  // --- простое XOR-шифрование для хранения ---
+  function xorEncode(str, key) {
+    let out = '';
+    for (let i = 0; i < str.length; i++) {
+      out += String.fromCharCode(str.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+    }
+    return btoa(unescape(encodeURIComponent(out)));
+  }
+  function xorDecode(encoded, key) {
+    try {
+      const str = decodeURIComponent(escape(atob(encoded)));
+      let out = '';
+      for (let i = 0; i < str.length; i++) {
+        out += String.fromCharCode(str.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+      }
+      return out;
+    } catch { return null; }
+  }
+
+  function loadKeys() {
+    const raw = localStorage.getItem(VAULT_DATA_KEY);
+    if (!raw) return [];
+    try {
+      const decoded = xorDecode(raw, vaultPass);
+      return JSON.parse(decoded) || [];
+    } catch { return []; }
+  }
+
+  function saveKeys(keys) {
+    const encoded = xorEncode(JSON.stringify(keys), vaultPass);
+    localStorage.setItem(VAULT_DATA_KEY, encoded);
+  }
+
+  function doLogin() {
+    const pass = document.getElementById('vault-pass').value.trim();
+    if (!pass) { setErr('Введите пароль'); return; }
+
+    const stored = localStorage.getItem(VAULT_PASS_KEY);
+    if (!stored) {
+      // первый вход — устанавливаем пароль
+      localStorage.setItem(VAULT_PASS_KEY, btoa(pass));
+      vaultPass = pass;
+      showMain();
+    } else {
+      if (btoa(pass) !== stored) { setErr('Неверный пароль'); return; }
+      vaultPass = pass;
+      showMain();
+    }
+  }
+
+  function doLogout() {
+    vaultPass = '';
+    document.getElementById('vault-pass').value = '';
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('main-screen').style.display = 'none';
+    document.getElementById('login-err').textContent = '';
+  }
+
+  function showMain() {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('main-screen').style.display = 'block';
+    renderKeys();
+  }
+
+  function setErr(msg) {
+    document.getElementById('login-err').textContent = msg;
+  }
+
+  function addKey() {
+    const name  = document.getElementById('new-name').value.trim();
+    const value = document.getElementById('new-value').value.trim();
+    const desc  = document.getElementById('new-desc').value.trim();
+    if (!name || !value) { alert('Введите название и ключ'); return; }
+
+    const keys = loadKeys();
+    keys.push({ id: Date.now(), name, value, desc, added: new Date().toLocaleDateString('ru') });
+    saveKeys(keys);
+
+    document.getElementById('new-name').value = '';
+    document.getElementById('new-value').value = '';
+    document.getElementById('new-desc').value = '';
+    renderKeys();
+  }
+
+  function deleteKey(id) {
+    if (!confirm('Удалить ключ?')) return;
+    const keys = loadKeys().filter(k => k.id !== id);
+    saveKeys(keys);
+    renderKeys();
+  }
+
+  function renderKeys() {
+    const keys = loadKeys();
+    const list = document.getElementById('keys-list');
+    if (!keys.length) {
+      list.innerHTML = '<div class="empty-msg">// хранилище пустое</div>';
+      return;
+    }
+    list.innerHTML = '';
+    keys.forEach(k => {
+      const masked = mask(k.value);
+      const card = document.createElement('div');
+      card.className = 'key-card';
+      card.innerHTML = `
+        <div>
+          <div class="key-name">${esc(k.name)}</div>
+          ${k.desc ? `<div class="key-desc">${esc(k.desc)}</div>` : ''}
+          <div class="key-desc" style="margin-top:4px;color:#1f2937">${k.added || ''}</div>
+        </div>
+        <div class="key-value-wrap">
+          <span class="key-value" id="kv-${k.id}" title="Кликни чтобы показать/скрыть">${masked}</span>
+        </div>
+        <div class="btn-group">
+          <button class="eye-btn"  onclick="toggleReveal(${k.id}, '${esc(k.value)}')">👁</button>
+          <button class="copy-btn" onclick="copyKey(${k.id}, '${esc(k.value)}', this)">COPY</button>
+          <button class="del-btn"  onclick="deleteKey(${k.id})">✕</button>
+        </div>
+      `;
+      list.appendChild(card);
+    });
+  }
+
+  function mask(val) {
+    if (val.length <= 8) return '••••••••';
+    return val.slice(0, 4) + '••••••••••••' + val.slice(-4);
+  }
+
+  function toggleReveal(id, val) {
+    const el = document.getElementById('kv-' + id);
+    if (!el) return;
+    if (el.classList.contains('revealed')) {
+      el.textContent = mask(val);
+      el.classList.remove('revealed');
+    } else {
+      el.textContent = val;
+      el.classList.add('revealed');
+    }
+  }
+
+  function copyKey(id, val, btn) {
+    navigator.clipboard.writeText(val).then(() => {
+      btn.textContent = 'OK!';
+      setTimeout(() => btn.textContent = 'COPY', 1500);
+    });
+  }
+
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  document.getElementById('vault-pass').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+
+  // автологин если пароль уже введён в этой сессии
+  const sessionPass = sessionStorage.getItem('nova_vault_session');
+  if (sessionPass) {
+    const stored = localStorage.getItem(VAULT_PASS_KEY);
+    if (stored && btoa(sessionPass) === stored) {
+      vaultPass = sessionPass;
+      showMain();
+    }
+  }
+</script>
+</body>
+</html>
