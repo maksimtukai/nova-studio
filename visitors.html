@@ -264,11 +264,18 @@
     if (!ok) { showMsg('неверный ключ'); return; }
     adminKey = key;
     localStorage.setItem('nova_visitors_key', key);
-    sinceIndex = 0;
     allEntries = [];
     seenIPs = new Set();
     document.getElementById('terminal').innerHTML = '<div id="empty">// connecting...</div>';
-    fetchLogs(true);
+    // узнаём текущий размер файла чтобы показывать только новые записи
+    try {
+      const res = await fetch(LOG_URL + '?_=' + Date.now());
+      const text = res.ok ? await res.text() : '';
+      sinceIndex = text.trim() ? text.trim().split('\n').length : 0;
+    } catch { sinceIndex = 0; }
+    document.getElementById('terminal').innerHTML = '<div id="empty">// подключено — ожидаем новых посетителей...</div>';
+    updateStats();
+    if (!pollTimer) pollTimer = setInterval(() => fetchLogs(false), 2000);
   }
 
   async function fetchLogs(initial = false) {
