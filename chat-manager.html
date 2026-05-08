@@ -137,11 +137,6 @@ function appendMsg(container, msg) {
 }
 
 function startManagerSSE() {
-  if (eventSource) eventSource.close();
-  eventSource = new EventSource(`${BASE}/manager-stream`);
-  // Can't send headers with EventSource, so we use a workaround:
-  // Re-implement with fetch + ReadableStream
-  eventSource.close();
   startManagerFetch();
 }
 

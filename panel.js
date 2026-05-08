@@ -2,10 +2,11 @@ const USERS_STORAGE_KEY = "nova_users";
 const SESSION_STORAGE_KEY = "nova_session";
 const PANEL_KEY_STORAGE_KEY = "nova_panel_admin_key";
 const API_BASES = Array.from(new Set([
+  location.protocol !== 'file:' ? '/api' : null,
   `http://${window.location.hostname}:43219/api`,
   "http://127.0.0.1:43219/api",
   "http://localhost:43219/api"
-]));
+].filter(Boolean)));
 const FIELD_ICONS = {
   adminKey: "🛡️",
   name: "👤",
@@ -246,7 +247,7 @@ async function apiFetch(path, method = "GET") {
     return data || {};
   }
 
-  throw new Error("Control API недоступен. Запустите control-api.ps1 (порт 8093).");
+  throw new Error("Сервер недоступен. Убедитесь, что server.js запущен.");
 }
 
 async function fetchServerStatus() {
