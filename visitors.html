@@ -304,7 +304,7 @@
       updateStats();
 
       if (!pollTimer) {
-        pollTimer = setInterval(() => fetchLogs(false), 150);
+        pollTimer = setInterval(() => fetchLogs(false), 2000);
       }
     } catch(err) {
       showMsg('ошибка: ' + err.message);
