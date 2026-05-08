@@ -2,7 +2,6 @@ const http = require('http');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
-const url = require('url');
 const { spawn } = require('child_process');
 
 // Load .env
@@ -264,7 +263,7 @@ async function handleChat(action, req, res) {
 
   // SSE stream for visitor
   if (action === 'stream') {
-    const sessionId = url.parse(req.url, true).query.sessionId;
+    const sessionId = new URL(req.url, 'http://localhost').searchParams.get('sessionId');
     if (!sessionId) { res.writeHead(400); return res.end(); }
     res.writeHead(200, { ...corsHeaders, 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
     res.write(':\n\n');
@@ -302,7 +301,7 @@ async function handleChat(action, req, res) {
 
   // Get messages for session (manager or visitor with correct sessionId)
   if (action === 'messages') {
-    const sessionId = url.parse(req.url, true).query.sessionId;
+    const sessionId = new URL(req.url, 'http://localhost').searchParams.get('sessionId');
     if (!sessionId) return sendJson(res, 400, { message: 'No sessionId' });
     const chats = readChats();
     const session = chats[sessionId];
@@ -376,7 +375,7 @@ async function handleChat(action, req, res) {
 
 const server = http.createServer(async (req, res) => {
   console.log(`[REQ] ${req.method} ${req.url}`);
-  const { pathname } = url.parse(req.url);
+  const { pathname } = new URL(req.url, 'http://localhost');
 
   if (req.method === 'OPTIONS') {
     res.writeHead(204, {
