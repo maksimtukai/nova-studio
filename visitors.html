@@ -351,13 +351,14 @@
   }
 
   async function clearLog() {
+    let cleared = false;
     for (const base of API_BASES) {
       try {
         const r = await fetch(base + '/clear-log', { method: 'POST', headers: { 'X-Admin-Key': adminKey } });
-        if (r.ok) break;
+        if (r.ok) { cleared = true; break; }
       } catch {}
     }
-    sinceIndex = 0;
+    if (cleared) sinceIndex = 0;
     allEntries = [];
     seenIPs = new Set();
     document.getElementById('terminal').innerHTML = '<div id="empty">// cleared — watching for new visitors...</div>';
