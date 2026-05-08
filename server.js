@@ -401,6 +401,12 @@ const server = http.createServer(async (req, res) => {
     return sendJson(res, 200, { running: true, pid: process.pid, startTime: SERVER_START });
   }
 
+  if (pathname === '/api/clear-log' && req.method === 'POST') {
+    if (!checkAdminKey(req)) return sendJson(res, 401, { message: 'Unauthorized' });
+    try { fs.writeFileSync(LOG_FILE, '', 'utf8'); } catch {}
+    return sendJson(res, 200, { ok: true });
+  }
+
   if (pathname === '/api/start' && req.method === 'POST') {
     if (!checkAdminKey(req)) return sendJson(res, 401, { message: 'Unauthorized' });
     return sendJson(res, 200, { message: 'already running' });

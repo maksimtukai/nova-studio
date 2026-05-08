@@ -350,10 +350,17 @@
     }
   }
 
-  function clearLog() {
-    document.getElementById('terminal').innerHTML = '<div id="empty">// cleared — watching for new visitors...</div>';
+  async function clearLog() {
+    for (const base of API_BASES) {
+      try {
+        const r = await fetch(base + '/clear-log', { method: 'POST', headers: { 'X-Admin-Key': adminKey } });
+        if (r.ok) break;
+      } catch {}
+    }
+    sinceIndex = 0;
     allEntries = [];
     seenIPs = new Set();
+    document.getElementById('terminal').innerHTML = '<div id="empty">// cleared — watching for new visitors...</div>';
     updateStats();
   }
 
