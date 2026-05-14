@@ -9,6 +9,7 @@ ngrok.exe
 *.log
 admin.key
 admin.key.example
+users.json
 null
 .claude/
 *.lnk

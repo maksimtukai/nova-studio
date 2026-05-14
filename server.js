@@ -2,6 +2,7 @@ const http = require('http');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { spawn } = require('child_process');
 
 // Load .env
@@ -48,6 +49,31 @@ function readUsers() {
 
 function writeUsers(users) {
   fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2), 'utf8');
+}
+
+function hashPassword(password, salt = crypto.randomBytes(16).toString('hex')) {
+  const hash = crypto.pbkdf2Sync(password, salt, 210000, 32, 'sha256').toString('hex');
+  return `pbkdf2_sha256$210000$${salt}$${hash}`;
+}
+
+function verifyPassword(password, stored) {
+  const value = String(stored || '');
+  const parts = value.split('$');
+  if (parts.length !== 4 || parts[0] !== 'pbkdf2_sha256') {
+    return value === password;
+  }
+
+  const [, iterationsRaw, salt, expectedHex] = parts;
+  const iterations = Number(iterationsRaw);
+  if (!Number.isInteger(iterations) || iterations <= 0) return false;
+
+  const actual = crypto.pbkdf2Sync(password, salt, iterations, 32, 'sha256');
+  const expected = Buffer.from(expectedHex, 'hex');
+  return expected.length === actual.length && crypto.timingSafeEqual(actual, expected);
+}
+
+function hasPlaintextPassword(user) {
+  return user && typeof user.password === 'string' && !user.password.startsWith('pbkdf2_sha256$');
 }
 
 function sendJson(res, code, obj) {
@@ -120,7 +146,7 @@ async function handleAuth(action, req, res) {
       if (!name || !email || !pass) return sendJson(res, 400, { message: 'Заполните все поля.' });
       if (pass.length < 6) return sendJson(res, 400, { message: 'Пароль должен быть от 6 символов.' });
       if (users.find(u => u.email === email)) return sendJson(res, 409, { message: 'Email уже зарегистрирован.' });
-      users.push({ name, email, password: pass });
+      users.push({ name, email, password: hashPassword(pass) });
       writeUsers(users);
       return sendJson(res, 200, { message: 'Регистрация успешна.' });
     }
@@ -128,8 +154,12 @@ async function handleAuth(action, req, res) {
     if (action === 'login') {
       const email = String(body.email || '').trim().toLowerCase();
       const pass = String(body.password || '');
-      const found = users.find(u => u.email === email && u.password === pass);
+      const found = users.find(u => u.email === email && verifyPassword(pass, u.password));
       if (!found) return sendJson(res, 401, { message: 'Неверный email или пароль.' });
+      if (hasPlaintextPassword(found)) {
+        found.password = hashPassword(pass);
+        writeUsers(users);
+      }
       return sendJson(res, 200, { message: 'Успешный вход.', name: found.name, email: found.email });
     }
 
@@ -139,7 +169,7 @@ async function handleAuth(action, req, res) {
       if (newPass.length < 6) return sendJson(res, 400, { message: 'Пароль должен быть от 6 символов.' });
       const idx = users.findIndex(u => u.email === email);
       if (idx < 0) return sendJson(res, 400, { message: 'Email не найден.' });
-      users[idx].password = newPass;
+      users[idx].password = hashPassword(newPass);
       writeUsers(users);
       return sendJson(res, 200, { message: 'Пароль обновлён.' });
     }
