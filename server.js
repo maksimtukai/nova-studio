@@ -1010,11 +1010,6 @@ function getNgrokUrl() {
 const server = http.createServer(async (req, res) => {
   console.log(`[REQ] ${req.method} ${req.url}`);
   const { pathname } = new URL(req.url, 'http://localhost');
-  // Редирект с корня на /nova/
-  if (pathname === '/') {
-    res.writeHead(302, { Location: '/nova/' });
-    return res.end();
-  }
 
   if (req.method === 'OPTIONS') {
     res.writeHead(204, {
