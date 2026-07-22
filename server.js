@@ -38,6 +38,7 @@ const USERS_FILE = path.join(ROOT, 'users.json');
 const ADMIN_KEY = process.env.ADMIN_KEY || (() => { try { return fs.readFileSync(path.join(ROOT, 'admin.key'), 'utf8').trim(); } catch { return '1234567890'; } })();
 const SERVER_START = new Date().toISOString();
 const ERRORS_FILE = path.join(ROOT, 'errors.log');
+const IS_VERCEL = Boolean(process.env.VERCEL);
 
 const SUPABASE_URL = process.env.SUPABASE_URL || '';
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || '';
@@ -741,6 +742,12 @@ async function handleAuth(action, req, res) {
     const body = JSON.parse(bodyText || '{}');
     const users = await readUsers();
 
+    // На Vercel локальные JSON-файлы не являются надёжным хранилищем.
+    // Если Supabase не инициализировался, возвращаем понятную ошибку, а не "Неверный email или пароль".
+    if (IS_VERCEL && !supabase) {
+      return sendJson(res, 500, { message: 'Сервер авторизации не настроен. Проверьте переменные окружения Supabase в Vercel.' });
+    }
+
     if (action === 'register') {
       const name = String(body.name || '').replace(/[\x00-\x1f]/g, '').trim();
       const email = String(body.email || '').trim().toLowerCase();
@@ -777,8 +784,9 @@ async function handleAuth(action, req, res) {
           .from('users')
           .select('*')
           .eq('email', email)
-          .single();
-        if (error || !user) return sendJson(res, 401, { message: 'Неверный email или пароль.' });
+          .maybeSingle();
+        if (error) return sendJson(res, 500, { message: 'Ошибка базы данных. Попробуйте позже.' });
+        if (!user) return sendJson(res, 401, { message: 'Неверный email или пароль.' });
         if (!verifyPassword(pass, user.password)) return sendJson(res, 401, { message: 'Неверный email или пароль.' });
         return sendJson(res, 200, { message: 'Успешный вход.', name: user.name, email: user.email });
       } else {
@@ -798,11 +806,15 @@ async function handleAuth(action, req, res) {
       if (newPass.length < 6) return sendJson(res, 400, { message: 'Пароль должен быть от 6 символов.' });
       
       if (supabase) {
-        const { error } = await supabase
+        const { data: updated, error } = await supabase
           .from('users')
           .update({ password: hashPassword(newPass) })
-          .eq('email', email);
-        if (error) return sendJson(res, 400, { message: 'Email не найден.' });
+          .eq('email', email)
+          .select('email');
+        if (error) return sendJson(res, 500, { message: 'Ошибка обновления пароля. Попробуйте позже.' });
+        if (!updated || (Array.isArray(updated) && updated.length === 0)) {
+          return sendJson(res, 400, { message: 'Email не найден.' });
+        }
       } else {
         const idx = users.findIndex(u => u.email === email);
         if (idx < 0) return sendJson(res, 400, { message: 'Email не найден.' });
