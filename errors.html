@@ -107,7 +107,9 @@
       term.innerHTML = '<div id="empty">// ошибок нет — хорошо!</div>';
       return;
     }
-    [...entries].reverse().forEach(e => {
+    // Limit to last 100 entries for performance
+    const entriesToRender = entries.slice(-100);
+    [...entriesToRender].reverse().forEach(e => {
       const div = document.createElement('div');
       div.className = 'entry';
       const detail = e.detail ? `<div class="e-detail">↳ ${esc(e.detail)}</div>` : '';
@@ -127,6 +129,7 @@
   function fmt(iso) {
     try {
       const d = new Date(iso);
+      if (isNaN(d.getTime())) return iso || '';
       return pad(d.getDate())+'.'+pad(d.getMonth()+1)+' '+pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
     } catch { return iso || ''; }
   }
@@ -137,7 +140,7 @@
   }
 
   loadErrors();
-  setInterval(loadErrors, 15000);
+  setInterval(loadErrors, 30000);
 </script>
 </body>
 </html>

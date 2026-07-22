@@ -6,6 +6,7 @@ server.url
 .control-api-8093.pid
 .ngrok.pid
 ngrok.exe
+cloudflared.exe
 *.log
 admin.key
 admin.key.example

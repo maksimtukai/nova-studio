@@ -222,6 +222,7 @@
   <input type="text" id="filterIp" placeholder="фильтр IP...">
   <label style="margin-left:8px;">PATH:</label>
   <input type="text" id="filterPath" placeholder="фильтр path...">
+  <button id="pause-btn" onclick="togglePause()">PAUSE</button>
   <button id="clear-btn" onclick="clearLog()">CLEAR</button>
 </div>
 
@@ -236,8 +237,8 @@
   <div id="empty">// no visitors yet —  waiting for connections...</div>
 </div>
 
+<script src="analytics.js"></script>
 <script>
-  const LOG_URL = '/nova/visitors.log';
   const API_BASES = ['/api', 'http://localhost:43219/api', 'http://127.0.0.1:43219/api'];
   let adminKey = '';
   let sinceIndex = 0;
@@ -256,6 +257,20 @@
     return false;
   }
 
+  async function fetchLogText() {
+    for (const base of API_BASES) {
+      try {
+        const res = await fetch(base + '/logs?_=' + Date.now(), {
+          headers: { 'X-Admin-Key': adminKey }
+        });
+        if (res.ok) return await res.text();
+        if (res.status === 401) { showMsg('неверный ключ'); return ''; }
+      } catch {}
+    }
+    showMsg('ошибка загрузки логов');
+    return '';
+  }
+
   async function connect() {
     const key = document.getElementById('keyInput').value.trim();
     if (!key) { showMsg('введите ключ'); return; }
@@ -269,23 +284,20 @@
     document.getElementById('terminal').innerHTML = '<div id="empty">// connecting...</div>';
     // узнаём текущий размер файла чтобы показывать только новые записи
     try {
-      const res = await fetch(LOG_URL + '?_=' + Date.now());
-      const text = res.ok ? await res.text() : '';
+      const text = await fetchLogText();
       sinceIndex = text.trim() ? text.trim().split('\n').length : 0;
     } catch { sinceIndex = 0; }
     document.getElementById('terminal').innerHTML = '<div id="empty">// подключено — ожидаем новых посетителей...</div>';
     updateStats();
-    if (!pollTimer) pollTimer = setInterval(() => fetchLogs(false), 2000);
+    if (!pollTimer) pollTimer = setInterval(() => fetchLogs(false), 5000);
   }
 
   async function fetchLogs(initial = false) {
     try {
-      const res = await fetch(LOG_URL + '?_=' + Date.now());
-      if (!res.ok && res.status !== 404) { showMsg('ошибка сервера'); return; }
+      const text = await fetchLogText();
       showMsg('');
       document.getElementById('live-dot').style.display = '';
 
-      const text = res.status === 404 ? '' : await res.text();
       const lines = text.trim() ? text.trim().split('\n') : [];
       const newLines = lines.slice(sinceIndex);
       const newEntries = [];
@@ -325,7 +337,11 @@
 
     if (replace) term.innerHTML = '';
 
-    entries.forEach(e => {
+    // Limit to last 100 entries for performance
+    const entriesToRender = entries.slice(-100);
+    let renderedCount = 0;
+
+    entriesToRender.forEach(e => {
       if (filterIp   && !e.ip.toLowerCase().includes(filterIp))   return;
       if (filterPath && !e.p.toLowerCase().includes(filterPath))  return;
 
@@ -343,7 +359,13 @@
         <span class="e-path">${esc(e.m)} ${esc(e.p)}${ua ? '<br>' + ua : ''}${ref ? '<br>' + ref : ''}</span>
       `;
       term.appendChild(div);
+      renderedCount++;
     });
+
+    // Remove old entries if too many
+    while (term.children.length > 100) {
+      term.removeChild(term.firstChild);
+    }
 
     term.scrollTop = term.scrollHeight;
   }
@@ -377,6 +399,26 @@
     document.getElementById('live-dot').style.display = 'none';
   }
 
+  let isPaused = false;
+  function togglePause() {
+    isPaused = !isPaused;
+    const btn = document.getElementById('pause-btn');
+    if (isPaused) {
+      stopPoll();
+      btn.textContent = 'RESUME';
+      btn.style.borderColor = '#00ff41';
+      btn.style.color = '#00ff41';
+    } else {
+      if (adminKey) {
+        pollTimer = setInterval(() => fetchLogs(false), 5000);
+        document.getElementById('live-dot').style.display = '';
+      }
+      btn.textContent = 'PAUSE';
+      btn.style.borderColor = '#2a2a2a';
+      btn.style.color = '#444';
+    }
+  }
+
   function showMsg(msg) {
     document.getElementById('auth-msg').textContent = msg;
   }
@@ -403,9 +445,18 @@
     return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
-  // apply filter on Enter
-  document.getElementById('filterIp').addEventListener('keydown',   e => { if(e.key==='Enter') renderEntries(allEntries, true); });
-  document.getElementById('filterPath').addEventListener('keydown', e => { if(e.key==='Enter') renderEntries(allEntries, true); });
+  function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+  }
+
+  // apply filter with debouncing
+  const debouncedRender = debounce(() => renderEntries(allEntries, true), 300);
+  document.getElementById('filterIp').addEventListener('input',   debouncedRender);
+  document.getElementById('filterPath').addEventListener('input', debouncedRender);
   document.getElementById('keyInput').addEventListener('keydown',   e => { if(e.key==='Enter') connect(); });
 
   // load saved key

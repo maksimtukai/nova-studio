@@ -1,0 +1,10 @@
+version: "2"
+authtoken: 3ETqs8TFGsYaOzXfHZo1uYu07JG_6fzFMWGkn65K5mga2Cgk5
+
+tunnels:
+  web:
+    proto: http
+    addr: 43219
+    inspect: false
+    compression: true
+    metadata: "nova-studio"

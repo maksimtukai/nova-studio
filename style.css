@@ -262,6 +262,15 @@ body::before {
   border-color: rgba(124, 240, 200, 0.6);
 }
 
+.field input:-webkit-autofill,
+.field input:-webkit-autofill:hover,
+.field input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--text);
+  box-shadow: 0 0 0 1000px #111827 inset;
+  caret-color: var(--text);
+  transition: background-color 9999s ease-in-out 0s;
+}
+
 .field input.is-invalid {
   border-color: rgba(255, 159, 159, 0.85);
 }
@@ -563,12 +572,17 @@ body::before {
   margin-top: 2px;
 }
 .pd-item {
+  appearance: none;
+  -webkit-appearance: none;
   display: flex !important;
   align-items: center;
   gap: 10px;
   padding: 9px 12px;
+  border: 0;
   border-radius: 8px;
+  background: transparent !important;
   font-size: 13px;
+  font-family: inherit;
   color: #aab7d6;
   cursor: pointer;
   transition: background .15s, color .15s;
@@ -577,11 +591,19 @@ body::before {
   box-sizing: border-box;
 }
 .pd-item:hover {
-  background: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.07) !important;
+  color: #edf2ff;
+}
+.pd-item:focus {
+  outline: none;
+}
+.pd-item:focus-visible {
+  background: rgba(124,240,200,0.12) !important;
+  box-shadow: 0 0 0 1px rgba(124,240,200,0.35) inset;
   color: #edf2ff;
 }
 .pd-item.pd-danger { color: #f87171; }
-.pd-item.pd-danger:hover { background: rgba(248,113,113,0.1); color: #f87171; }
+.pd-item.pd-danger:hover { background: rgba(248,113,113,0.1) !important; color: #f87171; }
 .pd-icon { font-size: 15px; width: 20px; text-align: center; }
 
 .reveal {

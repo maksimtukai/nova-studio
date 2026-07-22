@@ -336,8 +336,8 @@
                 <div class="pd-name" id="pd-name">—</div>
                 <div class="pd-email" id="pd-email">—</div>
               </div>
-              <a class="pd-item" href="#"><span class="pd-icon">⚙️</span>Настройки</a>
-              <a class="pd-item" href="#"><span class="pd-icon">📁</span>Мои проекты</a>
+              <button class="pd-item" type="button" id="settingsBtn"><span class="pd-icon">⚙️</span>Настройки</button>
+              <button class="pd-item" type="button" id="projectsBtn"><span class="pd-icon">📁</span>Мои проекты</button>
               <div class="pd-item pd-danger" id="logoutBtn"><span class="pd-icon">🚪</span>Выход</div>
             </div>
           </div>
@@ -362,23 +362,23 @@
             <p class="auth-meta">
               Уже есть аккаунт? <a class="auth-link" href="login.html">Вход</a>
             </p>
-            <form id="registerForm" class="auth-form">
+            <form id="registerForm" class="auth-form" autocomplete="off">
               <h2>Регистрация</h2>
               <label class="field">
                 <span>Имя</span>
-                <input type="text" name="name" placeholder="Ваше имя" required>
+                <input type="text" name="name" placeholder="Ваше имя" autocomplete="off" required>
               </label>
               <label class="field">
                 <span>Email</span>
-                <input type="email" name="email" placeholder="you@mail.com" required>
+                <input type="email" name="email" placeholder="you@mail.com" autocomplete="off" required>
               </label>
               <label class="field">
                 <span>Пароль</span>
-                <input type="password" name="password" minlength="6" placeholder="Минимум 6 символов" required>
+                <input type="password" name="password" minlength="6" placeholder="Минимум 6 символов" autocomplete="new-password" required>
               </label>
               <label class="field">
                 <span>Повторите пароль</span>
-                <input type="password" name="confirmPassword" minlength="6" placeholder="Повторите пароль" required>
+                <input type="password" name="confirmPassword" minlength="6" placeholder="Повторите пароль" autocomplete="new-password" required>
               </label>
               <button class="btn-primary" type="submit">Зарегистрироваться</button>
               <p class="form-message" id="registerMessage"></p>
@@ -407,6 +407,12 @@
           <div class="stat-card">
             <div class="stat-num">24/7</div>
             <div class="stat-label">поддержка</div>
+          </div>
+          <div class="stat-card">
+            <a href="analytics.html" style="display:grid;gap:6px;color:inherit;text-decoration:none;">
+              <div class="stat-num">NOVA</div>
+              <div class="stat-label">Аналитика</div>
+            </a>
           </div>
         </div>
 
@@ -437,7 +443,7 @@
           <div class="nova-space-left">
             <div class="nova-space-badge">Nova Space</div>
             <h2 class="nova-space-title">Твой личный кабинет<br>в <span class="nova-space-accent">Nova Space</span></h2>
-            <p class="nova-space-text">Отслеживай этапы разработки своего проекта в реальном времени, общайся с командой и храни все документы в одном месте.</p>
+            <p class="nova-space-text">Отслеживай этапы разработки своего проекта в реальном времени, управляй своим аккаунтом и храни все документы в одном месте.</p>
           </div>
           <div class="nova-space-right">
             <div class="nova-space-features">
@@ -449,10 +455,10 @@
                 </div>
               </div>
               <div class="nsf-item">
-                <span class="nsf-icon">💬</span>
+                <span class="nsf-icon">�</span>
                 <div>
-                  <div class="nsf-title">Чат с командой</div>
-                  <div class="nsf-desc">Прямая связь с разработчиками без лишних звонков</div>
+                  <div class="nsf-title">Аккаунт пользователя</div>
+                  <div class="nsf-desc">Безопасный вход и быстрый доступ к личному кабинету</div>
                 </div>
               </div>
               <div class="nsf-item">
@@ -593,6 +599,8 @@
     const chip = document.getElementById('userChip');
     const dropdown = document.getElementById('profileDropdown');
     const logoutBtn = document.getElementById('logoutBtn');
+    const settingsBtn = document.getElementById('settingsBtn');
+    const projectsBtn = document.getElementById('projectsBtn');
 
     if (!chip || !dropdown) return;
 
@@ -624,6 +632,21 @@
       logoutBtn.addEventListener('click', () => {
         sessionStorage.removeItem('nova_session');
         window.location.href = 'login.html';
+      });
+    }
+
+    if (settingsBtn) {
+      settingsBtn.addEventListener('click', () => {
+        dropdown.classList.remove('is-open');
+        alert('Настройки профиля скоро появятся.');
+      });
+    }
+
+    if (projectsBtn) {
+      projectsBtn.addEventListener('click', () => {
+        dropdown.classList.remove('is-open');
+        const target = document.getElementById('logged-sections') || document.querySelector('.nova-space-section');
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
     }
   })();
@@ -735,6 +758,7 @@
     window.addEventListener('resize', () => { resize(); createParticles(); });
   })();
   </script>
+  <script src="analytics.js"></script>
   <script src="script.js?v=3"></script>
   <script src="pwa.js"></script>
   <script src="enhancements.js"></script>

@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nova Analytics</title>
+  <link rel="icon" type="image/svg+xml" href="analytics-icon.svg">
+  <link rel="apple-touch-icon" href="icon-512.png">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+      background: linear-gradient(180deg, #07100f 0%, #0b1416 48%, #0d1719 100%);
+      color: #e9fff5;
+      font-family: Inter, Arial, sans-serif;
+      display: flex;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(38, 108, 85, 0.26), transparent 34%),
+        radial-gradient(circle at 12% 18%, rgba(25, 132, 94, 0.12), transparent 24%),
+        radial-gradient(circle at 88% 12%, rgba(31, 97, 112, 0.1), transparent 20%),
+        linear-gradient(rgba(255,255,255,0.022) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+      background-size: auto, auto, auto, 38px 38px, 38px 38px;
+      opacity: 0.72;
+    }
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at center, transparent 42%, rgba(2, 8, 10, 0.22) 100%),
+        linear-gradient(180deg, rgba(0,0,0,0.04), rgba(0,0,0,0.28));
+    }
+    /* Sidebar */
+    .sidebar {
+      width: 260px;
+      background: rgba(2, 8, 7, 0.92);
+      border-right: 1px solid rgba(99, 201, 162, 0.12);
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      position: relative;
+      z-index: 2;
+      height: 100vh;
+      position: sticky;
+      top: 0;
+    }
+    .sidebar-title {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      margin-bottom: 8px;
+    }
+    .nav-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      color: #8eb8aa;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+    .nav-item:hover {
+      background: rgba(77,255,177,0.08);
+      color: #d9fcef;
+    }
+    .nav-item.active {
+      background: linear-gradient(135deg, rgba(11,120,74,0.35), rgba(16,193,106,0.2));
+      color: #4dffb1;
+    }
+    .nav-icon {
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .sidebar-footer {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(99,201,162,0.1);
+    }
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      color: #7beab7;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #00ff94;
+      box-shadow: 0 0 10px rgba(0,255,148,0.8);
+      animation: pulse 1.8s infinite;
+    }
+    .status-label {
+      color: #8eb8aa;
+      font-size: 12px;
+    }
+    .status-value {
+      color: #d9fcef;
+      font-size: 13px;
+    }
+    /* Main content */
+    .main-content {
+      flex: 1;
+      position: relative;
+      z-index: 1;
+    }
+    .shell {
+      position: relative;
+      z-index: 1;
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .title-wrap h1 {
+      margin: 0;
+      font-size: 34px;
+      letter-spacing: 0.02em;
+    }
+    .subtitle {
+      margin-top: 8px;
+      color: #8eb8aa;
+      font-size: 14px;
+    }
+    .status-line {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+      color: #7beab7;
+      font-size: 13px;
+    }
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #00ff94;
+      box-shadow: 0 0 12px rgba(0,255,148,0.8);
+      animation: pulse 1.8s infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.45; transform: scale(0.84); }
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: flex-end;
+      align-items: center;
+    }
+    .panel,
+    .card {
+      background: rgba(8,20,19,0.82);
+      border: 1px solid rgba(99,201,162,0.14);
+      box-shadow: 0 18px 50px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.025);
+      border-radius: 22px;
+      backdrop-filter: blur(16px);
+    }
+    .panel {
+      padding: 14px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    input[type="password"] {
+      min-width: 220px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(90,120,110,0.8);
+      background: rgba(3,10,8,0.85);
+      color: #f5fff9;
+      outline: none;
+    }
+    button {
+      border: none;
+      border-radius: 14px;
+      padding: 12px 16px;
+      cursor: pointer;
+      color: #f6fff8;
+      background: linear-gradient(135deg, #0f7b4f, #11aa67);
+      font-weight: 600;
+    }
+    button.alt {
+      background: rgba(10,24,20,0.92);
+      border: 1px solid rgba(87,255,176,0.2);
+      color: #a6ffcf;
+    }
+    button.danger {
+      background: linear-gradient(135deg, #551817, #a73331);
+    }
+    .range-switch {
+      display: flex;
+      gap: 6px;
+      padding: 6px;
+      border-radius: 16px;
+      background: rgba(5,14,12,0.9);
+      border: 1px solid rgba(86,255,177,0.1);
+    }
+    .range-btn {
+      background: transparent;
+      color: #84bba6;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: none;
+    }
+    .range-btn.active {
+      background: linear-gradient(135deg, #0b784a, #10c16a);
+      color: #04100d;
+    }
+    .message {
+      min-height: 22px;
+      margin: 12px 0 18px;
+      color: #8eb8aa;
+      font-size: 14px;
+    }
+    .message.error { color: #ff8a8a; }
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0,1fr));
+      gap: 16px;
+    }
+    .card {
+      padding: 18px;
+      overflow: hidden;
+    }
+    .metric-card {
+      grid-column: span 2;
+      min-height: 132px;
+      position: relative;
+    }
+    .metric-card::after {
+      content: "";
+      position: absolute;
+      inset: auto -40px -40px auto;
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,255,148,0.12), transparent 68%);
+    }
+    .metric-title {
+      color: #89b9a8;
+      font-size: 13px;
+      margin-bottom: 14px;
+    }
+    .metric-value {
+      font-size: 34px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: 0.02em;
+    }
+    .metric-note {
+      color: #7beab7;
+      font-size: 13px;
+    }
+    .wide-7 { grid-column: span 7; }
+    .wide-5 { grid-column: span 5; }
+    .wide-4 { grid-column: span 4; }
+    .wide-6 { grid-column: span 6; }
+    .wide-12 { grid-column: span 12; }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
+    .card-meta {
+      color: #79a694;
+      font-size: 12px;
+    }
+    .chart-shell {
+      height: 260px;
+      border-radius: 18px;
+      background:
+        linear-gradient(180deg, rgba(0,255,148,0.05), rgba(0,0,0,0)),
+        rgba(1,10,8,0.84);
+      border: 1px solid rgba(87,255,176,0.08);
+      padding: 10px;
+    }
+    .chart-shell svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .bar-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .bar-row {
+      display: grid;
+      grid-template-columns: minmax(0,180px) 1fr 52px;
+      gap: 10px;
+      align-items: center;
+      font-size: 13px;
+    }
+    .bar-row .label {
+      color: #d9fcef;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .bar-track {
+      height: 10px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #12a95e, #59ffb3);
+    }
+    .bar-value {
+      text-align: right;
+      color: #8fedbb;
+    }
+    .event-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 320px;
+      overflow: auto;
+    }
+    .event-item {
+      display: grid;
+      grid-template-columns: 88px minmax(0,1fr);
+      gap: 10px;
+      align-items: start;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.03);
+    }
+    .event-time {
+      color: #85baa6;
+      font-size: 12px;
+    }
+    .event-main {
+      font-size: 13px;
+      color: #f2fff9;
+    }
+    .event-sub {
+      margin-top: 4px;
+      color: #7ea898;
+      font-size: 12px;
+    }
+    .split {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      gap: 18px;
+      align-items: center;
+    }
+    .donut {
+      width: 170px;
+      height: 170px;
+      border-radius: 50%;
+      margin: 0 auto;
+      position: relative;
+    }
+    .donut::after {
+      content: attr(data-total);
+      position: absolute;
+      inset: 26px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-size: 18px;
+      font-weight: 700;
+      color: #f0fff7;
+      background: rgba(4,14,11,0.94);
+      white-space: pre-line;
+    }
+    .legend {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .legend-item {
+      display: grid;
+      grid-template-columns: 14px minmax(0,1fr) auto;
+      gap: 10px;
+      align-items: center;
+      font-size: 13px;
+    }
+    .swatch {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 12px;
+    }
+    .info-item {
+      padding: 14px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.03);
+    }
+    .info-label {
+      color: #83af9f;
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+    .info-value {
+      font-size: 16px;
+      font-weight: 600;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th, td {
+      padding: 12px 10px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    th {
+      color: #84b6a5;
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    td {
+      color: #ebfff6;
+    }
+    .empty {
+      color: #7ba493;
+      font-size: 13px;
+      padding: 12px 0;
+    }
+    @media (max-width: 1200px) {
+      .metric-card { grid-column: span 4; }
+      .wide-7, .wide-5, .wide-6, .wide-4 { grid-column: span 12; }
+      .split { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 720px) {
+      .shell { padding: 16px; }
+      .metric-card { grid-column: span 6; }
+      .bar-row { grid-template-columns: minmax(0,120px) 1fr 40px; }
+      .info-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <div>
+      <div class="sidebar-title">Analytics</div>
+    </div>
+    <div class="nav-list">
+      <a class="nav-item active" data-section="dashboard">
+        <div class="nav-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+            <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+            <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+            <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+          </svg>
+        </div>
+        <span>Dashboard</span>
+      </a>
+      <a class="nav-item" data-section="visitors">
+        <div class="nav-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+        </div>
+        <span>Visitors</span>
+      </a>
+      <a class="nav-item" data-section="events">
+        <div class="nav-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+          </svg>
+        </div>
+        <span>Events</span>
+      </a>
+      <a class="nav-item" data-section="pages">
+        <div class="nav-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+          </svg>
+        </div>
+        <span>Pages</span>
+      </a>
+      <a class="nav-item" data-section="referrers">
+        <div class="nav-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+          </svg>
+        </div>
+        <span>Referrers</span>
+      </a>
+      <a class="nav-item" data-section="browsers">
+        <div class="nav-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <circle cx="12" cy="12" r="4"></circle>
+            <line x1="21.17" y1="8" x2="12" y2="8"></line>
+            <line x1="3.95" y1="6.06" x2="8.54" y2="14"></line>
+            <line x1="10.88" y1="21.94" x2="15.46" y2="14"></line>
+          </svg>
+        </div>
+        <span>Browsers</span>
+      </a>
+      <a class="nav-item" data-section="countries">
+        <div class="nav-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+          </svg>
+        </div>
+        <span>Countries</span>
+      </a>
+      <a class="nav-item" data-section="devices">
+        <div class="nav-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+            <line x1="12" y1="18" x2="12.01" y2="18"></line>
+          </svg>
+        </div>
+        <span>Devices</span>
+      </a>
+      <a class="nav-item" data-section="realtime">
+        <div class="nav-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+            <polyline points="17 6 23 6 23 12"></polyline>
+          </svg>
+        </div>
+        <span>Realtime</span>
+      </a>
+    </div>
+    <div class="sidebar-footer">
+      <div class="status-row">
+        <span class="status-dot"></span>
+        <span>Export Data</span>
+      </div>
+      <div class="status-row">
+        <div class="nav-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+          </svg>
+        </div>
+        <span>Reports</span>
+      </div>
+      <div class="status-row">
+        <div class="nav-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </div>
+        <span>Settings</span>
+      </div>
+      <div class="status-row">
+        <div class="nav-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 16 16 12 12 8"></polyline>
+            <line x1="12" y1="2" x2="12" y2="12"></line>
+          </svg>
+        </div>
+        <span>Help</span>
+      </div>
+      <div style="margin-top:16px;">
+        <div class="status-label">Server Status</div>
+        <div class="status-value" id="sidebarServerStatus">Online</div>
+      </div>
+      <div>
+        <div class="status-label">Supabase</div>
+        <div class="status-value" id="sidebarSupabaseStatus">Connected</div>
+      </div>
+    </div>
+  </div>
+  <div class="main-content">
+    <div class="shell">
+      <div class="toolbar">
+        <div class="title-wrap">
+          <h1>Dashboard</h1>
+          <div class="subtitle">Полная статистика по просмотрам, сессиям, live-событиям и системной информации.</div>
+          <div class="status-line">
+            <span class="dot"></span>
+            <span id="liveStatus">Ожидание данных</span>
+          </div>
+        </div>
+        <div class="controls">
+          <div class="panel">
+            <input type="password" id="keyInput" placeholder="Ключ администратора">
+            <button id="loadBtn">Загрузить</button>
+            <button class="alt" id="refreshBtn">Обновить</button>
+          </div>
+          <div class="panel">
+            <div class="range-switch">
+              <button class="range-btn active" data-range="today">Сегодня</button>
+              <button class="range-btn" data-range="week">Неделя</button>
+              <button class="range-btn" data-range="month">Месяц</button>
+              <button class="range-btn" data-range="all">Все время</button>
+            </div>
+            <button class="alt" id="exportBtn">CSV</button>
+            <button class="danger" id="clearBtn">Очистить</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="message" id="message"></div>
+
+      <div class="dashboard">
+        <div class="card metric-card"><div class="metric-title">Всего просмотров</div><div class="metric-value" id="metricViews">0</div><div class="metric-note" id="metricEvents">0 событий</div></div>
+        <div class="card metric-card"><div class="metric-title">Уникальные посетители</div><div class="metric-value" id="metricVisitors">0</div><div class="metric-note" id="metricSessions">0 сессий</div></div>
+        <div class="card metric-card"><div class="metric-title">Онлайн сейчас</div><div class="metric-value" id="metricOnline">0</div><div class="metric-note">Активность за последние 5 минут</div></div>
+        <div class="card metric-card"><div class="metric-title">Средняя сессия</div><div class="metric-value" id="metricAvg">0с</div><div class="metric-note">По завершенным и активным сессиям</div></div>
+        <div class="card metric-card"><div class="metric-title">Страны</div><div class="metric-value" id="metricCountries">0</div><div class="metric-note">Уникальная география</div></div>
+        <div class="card metric-card"><div class="metric-title">Bounce Rate</div><div class="metric-value" id="metricBounce">0%</div><div class="metric-note" id="metricStored">0 записей</div></div>
+
+        <div class="card wide-7">
+          <div class="card-header">
+            <div class="card-title">Просмотры по времени</div>
+            <div class="card-meta" id="generatedAt">Нет обновления</div>
+          </div>
+          <div class="chart-shell" id="timelineChart"></div>
+        </div>
+
+        <div class="card wide-5">
+          <div class="card-header">
+            <div class="card-title">Live Events</div>
+            <div class="card-meta">Последние события</div>
+          </div>
+          <div class="event-list" id="liveEvents"></div>
+        </div>
+
+        <div class="card wide-6">
+          <div class="card-header">
+            <div class="card-title">Активность по дням недели</div>
+            <div class="card-meta">Срез по просмотрам</div>
+          </div>
+          <div class="bar-list" id="weekdayBars"></div>
+        </div>
+
+        <div class="card wide-6">
+          <div class="card-header">
+            <div class="card-title">География</div>
+            <div class="card-meta">Топ стран</div>
+          </div>
+          <div class="bar-list" id="countryBars"></div>
+        </div>
+
+        <div class="card wide-4">
+          <div class="card-header">
+            <div class="card-title">Браузеры</div>
+            <div class="card-meta">По просмотрам</div>
+          </div>
+          <div class="split">
+            <div class="donut" id="browserDonut" data-total="0&#10;browser"></div>
+            <div class="legend" id="browserLegend"></div>
+          </div>
+        </div>
+
+        <div class="card wide-4">
+          <div class="card-header">
+            <div class="card-title">Устройства</div>
+            <div class="card-meta">Desktop / Mobile / Tablet</div>
+          </div>
+          <div class="split">
+            <div class="donut" id="deviceDonut" data-total="0&#10;devices"></div>
+            <div class="legend" id="deviceLegend"></div>
+          </div>
+        </div>
+
+        <div class="card wide-4">
+          <div class="card-header">
+            <div class="card-title">Операционные системы</div>
+            <div class="card-meta">По просмотрам</div>
+          </div>
+          <div class="split">
+            <div class="donut" id="osDonut" data-total="0&#10;os"></div>
+            <div class="legend" id="osLegend"></div>
+          </div>
+        </div>
+
+        <div class="card wide-4">
+          <div class="card-header">
+            <div class="card-title">Языки</div>
+            <div class="card-meta">Браузер пользователя</div>
+          </div>
+          <div class="bar-list" id="languageBars"></div>
+        </div>
+
+        <div class="card wide-4">
+          <div class="card-header">
+            <div class="card-title">Top Pages</div>
+            <div class="card-meta">Самые популярные маршруты</div>
+          </div>
+          <div class="bar-list" id="topPages"></div>
+        </div>
+
+        <div class="card wide-4">
+          <div class="card-header">
+            <div class="card-title">Top Referrers</div>
+            <div class="card-meta">Источники трафика</div>
+          </div>
+          <div class="bar-list" id="topReferrers"></div>
+        </div>
+
+        <div class="card wide-12">
+          <div class="card-header">
+            <div class="card-title">System Info</div>
+            <div class="card-meta">ОС, экраны, язык и таймзоны</div>
+          </div>
+          <div class="info-grid">
+            <div class="info-item"><div class="info-label">Основная ОС</div><div class="info-value" id="infoOs">Нет данных</div></div>
+            <div class="info-item"><div class="info-label">Основное разрешение</div><div class="info-value" id="infoResolution">Нет данных</div></div>
+            <div class="info-item"><div class="info-label">Основной язык</div><div class="info-value" id="infoLanguage">Нет данных</div></div>
+            <div class="info-item"><div class="info-label">Основной браузер</div><div class="info-value" id="infoBrowser">Нет данных</div></div>
+            <div class="info-item"><div class="info-label">Таймзоны</div><div class="info-value" id="infoTimezones">Нет данных</div></div>
+            <div class="info-item"><div class="info-label">Последний визит</div><div class="info-value" id="infoLastVisit">Нет данных</div></div>
+          </div>
+        </div>
+
+        <div class="card wide-6">
+          <div class="card-header">
+            <div class="card-title">Recent Visitors</div>
+            <div class="card-meta">Последние просмотры</div>
+          </div>
+          <div style="overflow:auto;">
+            <table>
+              <thead><tr><th>Время</th><th>IP</th><th>Страна</th><th>Страница</th><th>Система</th></tr></thead>
+              <tbody id="recentVisitorsTable"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card wide-6">
+          <div class="card-header">
+            <div class="card-title">Экран и язык</div>
+            <div class="card-meta">Вторичные breakdown'ы</div>
+          </div>
+          <div style="overflow:auto;">
+            <table>
+              <thead><tr><th>Разрешение</th><th>Просмотры</th><th>Язык</th><th>Хитов</th></tr></thead>
+              <tbody id="screensTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="analytics.js"></script>
+  <script>
+    const API_ROOT = location.protocol === "file:" ? "http://localhost:43219/api" : "/api";
+    const KEY_STORAGE = "nova_analytics_admin_key";
+    const DONUT_COLORS = ["#4dffb1", "#14d67b", "#14b6ff", "#9c6bff", "#ff8d5d", "#ffd166"];
+    const state = {
+      adminKey: "",
+      range: "today",
+      data: null,
+      timer: null
+    };
+
+    function setMessage(text, isError = false) {
+      const node = document.getElementById("message");
+      node.textContent = text;
+      node.className = "message" + (isError ? " error" : "");
+    }
+
+    function formatNumber(value) {
+      return Number(value || 0).toLocaleString("ru-RU");
+    }
+
+    function formatDuration(seconds) {
+      const total = Number(seconds || 0);
+      if (total < 60) return `${total}с`;
+      const minutes = Math.floor(total / 60);
+      const remain = total % 60;
+      return `${String(minutes).padStart(2, "0")}:${String(remain).padStart(2, "0")}`;
+    }
+
+    function formatDateTime(value) {
+      if (!value) return "Нет данных";
+      try {
+        return new Date(value).toLocaleString("ru-RU");
+      } catch {
+        return value;
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    function renderLineChart(containerId, items) {
+      const container = document.getElementById(containerId);
+      if (!items || !items.length) {
+        container.innerHTML = '<div class="empty">Нет данных для графика.</div>';
+        return;
+      }
+
+      const width = 900;
+      const height = 240;
+      const padding = 26;
+      const max = Math.max(...items.map((item) => item.value), 1);
+      const step = items.length === 1 ? 0 : (width - padding * 2) / (items.length - 1);
+      const points = items.map((item, index) => {
+        const x = padding + index * step;
+        const y = height - padding - ((item.value / max) * (height - padding * 2));
+        return `${x},${y}`;
+      }).join(" ");
+      const area = `M ${padding},${height - padding} L ${points} L ${width - padding},${height - padding} Z`;
+      const labels = items.map((item, index) => {
+        const x = padding + index * step;
+        return `<text x="${x}" y="${height - 6}" text-anchor="middle" fill="#7fa997" font-size="11">${escapeHtml(item.label)}</text>`;
+      }).join("");
+      const dots = items.map((item, index) => {
+        const x = padding + index * step;
+        const y = height - padding - ((item.value / max) * (height - padding * 2));
+        return `<circle cx="${x}" cy="${y}" r="4" fill="#4dffb1"></circle>`;
+      }).join("");
+      const grid = [0, 0.25, 0.5, 0.75, 1].map((part) => {
+        const y = height - padding - ((height - padding * 2) * part);
+        const value = Math.round(max * part);
+        return `<g><line x1="${padding}" x2="${width - padding}" y1="${y}" y2="${y}" stroke="rgba(255,255,255,0.08)" stroke-dasharray="4 6"></line><text x="${padding - 6}" y="${y + 4}" text-anchor="end" fill="#6d8d80" font-size="11">${value}</text></g>`;
+      }).join("");
+
+      container.innerHTML = `
+        <svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="timelineGradient" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="rgba(77,255,177,0.45)"></stop>
+              <stop offset="100%" stop-color="rgba(77,255,177,0.02)"></stop>
+            </linearGradient>
+          </defs>
+          ${grid}
+          <path d="${area}" fill="url(#timelineGradient)"></path>
+          <polyline fill="none" stroke="#4dffb1" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" points="${points}"></polyline>
+          ${dots}
+          ${labels}
+        </svg>
+      `;
+    }
+
+    function renderBarList(containerId, items, labelKey, valueKey) {
+      const container = document.getElementById(containerId);
+      if (!items || !items.length) {
+        container.innerHTML = '<div class="empty">Нет данных.</div>';
+        return;
+      }
+      const max = Math.max(...items.map((item) => item[valueKey]), 1);
+      container.innerHTML = items.map((item) => {
+        const label = escapeHtml(item[labelKey] || "Unknown");
+        const value = Number(item[valueKey] || 0);
+        return `
+          <div class="bar-row">
+            <div class="label" title="${label}">${label}</div>
+            <div class="bar-track"><div class="bar-fill" style="width:${(value / max) * 100}%"></div></div>
+            <div class="bar-value">${formatNumber(value)}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderDonut(donutId, legendId, items) {
+      const donut = document.getElementById(donutId);
+      const legend = document.getElementById(legendId);
+      if (!items || !items.length) {
+        donut.style.background = "rgba(255,255,255,0.06)";
+        donut.dataset.total = "0\nнет данных";
+        legend.innerHTML = '<div class="empty">Нет данных.</div>';
+        return;
+      }
+      const total = items.reduce((sum, item) => sum + Number(item.count || 0), 0) || 1;
+      let offset = 0;
+      const slices = items.map((item, index) => {
+        const percent = (Number(item.count || 0) / total) * 100;
+        const start = offset;
+        offset += percent;
+        return `${DONUT_COLORS[index % DONUT_COLORS.length]} ${start}% ${offset}%`;
+      }).join(", ");
+      donut.style.background = `conic-gradient(${slices})`;
+      donut.dataset.total = `${formatNumber(total)}\nвсего`;
+      legend.innerHTML = items.map((item, index) => `
+        <div class="legend-item">
+          <span class="swatch" style="background:${DONUT_COLORS[index % DONUT_COLORS.length]}"></span>
+          <span>${escapeHtml(item.label)}</span>
+          <span>${formatNumber(item.count)}</span>
+        </div>
+      `).join("");
+    }
+
+    function renderLiveEvents(items) {
+      const container = document.getElementById("liveEvents");
+      if (!items || !items.length) {
+        container.innerHTML = '<div class="empty">Событий пока нет.</div>';
+        return;
+      }
+      container.innerHTML = items.map((item) => `
+        <div class="event-item">
+          <div class="event-time">${new Date(item.ts).toLocaleTimeString("ru-RU")}</div>
+          <div>
+            <div class="event-main">${escapeHtml(item.event)} • ${escapeHtml(item.path)}</div>
+            <div class="event-sub">${escapeHtml(item.browser)} • ${escapeHtml(item.os)} • ${escapeHtml(item.country)}</div>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function renderRecentVisitors(items) {
+      const body = document.getElementById("recentVisitorsTable");
+      if (!items || !items.length) {
+        body.innerHTML = '<tr><td colspan="5" class="empty">Нет данных.</td></tr>';
+        return;
+      }
+      body.innerHTML = items.map((item) => `
+        <tr>
+          <td>${escapeHtml(new Date(item.ts).toLocaleTimeString("ru-RU"))}</td>
+          <td>${escapeHtml(item.ip || "-")}</td>
+          <td>${escapeHtml(item.country || "-")}</td>
+          <td>${escapeHtml(item.path || "/")}</td>
+          <td>${escapeHtml(`${item.browser || "-"} / ${item.os || "-"}`)}</td>
+        </tr>
+      `).join("");
+    }
+
+    function renderScreensTable(screens, languages) {
+      const body = document.getElementById("screensTable");
+      const rows = Math.max(screens.length, languages.length, 1);
+      const parts = [];
+      for (let i = 0; i < rows; i += 1) {
+        const screen = screens[i];
+        const language = languages[i];
+        parts.push(`
+          <tr>
+            <td>${escapeHtml(screen ? screen.label : "-")}</td>
+            <td>${screen ? formatNumber(screen.count) : "-"}</td>
+            <td>${escapeHtml(language ? language.label : "-")}</td>
+            <td>${language ? formatNumber(language.count) : "-"}</td>
+          </tr>
+        `);
+      }
+      body.innerHTML = parts.join("");
+    }
+
+    function renderInfo(data) {
+      document.getElementById("metricViews").textContent = formatNumber(data.summary.totalViews);
+      document.getElementById("metricEvents").textContent = `${formatNumber(data.summary.totalEvents)} событий`;
+      document.getElementById("metricVisitors").textContent = formatNumber(data.summary.uniqueVisitors);
+      document.getElementById("metricSessions").textContent = `${formatNumber(data.summary.sessions)} сессий`;
+      document.getElementById("metricOnline").textContent = formatNumber(data.summary.onlineUsers);
+      document.getElementById("metricAvg").textContent = formatDuration(data.summary.avgSessionSec);
+      document.getElementById("metricCountries").textContent = formatNumber(data.summary.countries);
+      document.getElementById("metricBounce").textContent = `${data.summary.bounceRate}%`;
+      document.getElementById("metricStored").textContent = `${formatNumber(data.health.storedEvents)} записей`;
+      document.getElementById("generatedAt").textContent = `Обновлено ${formatDateTime(data.generatedAt)}`;
+      document.getElementById("liveStatus").textContent = `Online ${formatNumber(data.summary.onlineUsers)} • range: ${data.range}`;
+      document.getElementById("infoOs").textContent = data.systemInfo.topOs;
+      document.getElementById("infoResolution").textContent = data.systemInfo.topResolution;
+      document.getElementById("infoLanguage").textContent = data.systemInfo.topLanguage;
+      document.getElementById("infoBrowser").textContent = data.systemInfo.topBrowser;
+      document.getElementById("infoTimezones").textContent = (data.systemInfo.timezones || []).map((item) => `${item.label} (${item.count})`).join(", ") || "Нет данных";
+      document.getElementById("infoLastVisit").textContent = data.last ? `${formatDateTime(data.last.ts)} • ${data.last.path}` : "Нет данных";
+
+      renderLineChart("timelineChart", data.timeline || []);
+      renderLiveEvents(data.liveEvents || []);
+      renderBarList("weekdayBars", data.weekday || [], "label", "value");
+      renderBarList("countryBars", data.countriesList || [], "country", "count");
+      renderBarList("languageBars", data.languages || [], "label", "count");
+      renderBarList("topPages", data.topPages || [], "path", "count");
+      renderBarList("topReferrers", data.topReferrers || [], "referrer", "count");
+      renderDonut("browserDonut", "browserLegend", data.browsers || []);
+      renderDonut("deviceDonut", "deviceLegend", data.devices || []);
+      renderDonut("osDonut", "osLegend", data.os || []);
+      renderRecentVisitors(data.recentVisitors || []);
+      renderScreensTable(data.screens || [], data.languages || []);
+    }
+
+    async function loadStats() {
+      const key = document.getElementById("keyInput").value.trim();
+      if (!key) {
+        setMessage("Введите ключ администратора.", true);
+        return;
+      }
+      state.adminKey = key;
+      localStorage.setItem(KEY_STORAGE, key);
+      setMessage("Загружаю аналитику...");
+      try {
+        const response = await fetch(`${API_ROOT}/analytics/stats?range=${encodeURIComponent(state.range)}`, {
+          headers: { "X-Admin-Key": key }
+        });
+        if (response.status === 401) {
+          setMessage("Неверный ключ администратора.", true);
+          return;
+        }
+        if (!response.ok) throw new Error("Ошибка API");
+        const data = await response.json();
+        state.data = data;
+        renderInfo(data);
+        setMessage("Данные обновлены.");
+      } catch (error) {
+        setMessage("Не удалось загрузить аналитику.", true);
+      }
+    }
+
+    async function clearAnalytics() {
+      if (!state.adminKey) {
+        setMessage("Сначала загрузите данные.", true);
+        return;
+      }
+      if (!confirm("Очистить всю аналитику?")) return;
+      try {
+        const response = await fetch(`${API_ROOT}/analytics/clear`, {
+          method: "POST",
+          headers: { "X-Admin-Key": state.adminKey }
+        });
+        if (!response.ok) throw new Error("clear_failed");
+        setMessage("Аналитика очищена.");
+        await loadStats();
+      } catch {
+        setMessage("Не удалось очистить аналитику.", true);
+      }
+    }
+
+    function exportCsv() {
+      if (!state.data) {
+        setMessage("Сначала загрузите данные.", true);
+        return;
+      }
+      const lines = [
+        "section,label,value",
+        `summary,totalViews,${state.data.summary.totalViews}`,
+        `summary,uniqueVisitors,${state.data.summary.uniqueVisitors}`,
+        `summary,onlineUsers,${state.data.summary.onlineUsers}`,
+        `summary,avgSessionSec,${state.data.summary.avgSessionSec}`,
+        `summary,bounceRate,${state.data.summary.bounceRate}`
+      ];
+      (state.data.topPages || []).forEach((item) => lines.push(`topPages,"${item.path}",${item.count}`));
+      (state.data.topReferrers || []).forEach((item) => lines.push(`topReferrers,"${item.referrer}",${item.count}`));
+      (state.data.browsers || []).forEach((item) => lines.push(`browsers,"${item.label}",${item.count}`));
+      (state.data.devices || []).forEach((item) => lines.push(`devices,"${item.label}",${item.count}`));
+      (state.data.countriesList || []).forEach((item) => lines.push(`countries,"${item.country}",${item.count}`));
+      const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `analytics-${state.range}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+      setMessage("CSV экспортирован.");
+    }
+
+    function applyRange(range) {
+      state.range = range;
+      document.querySelectorAll(".range-btn").forEach((button) => {
+        button.classList.toggle("active", button.dataset.range === range);
+      });
+      if (state.adminKey) loadStats();
+    }
+
+    function startAutoRefresh() {
+      if (state.timer) clearInterval(state.timer);
+      state.timer = setInterval(() => {
+        if (state.adminKey) loadStats();
+      }, 15000);
+    }
+
+    document.getElementById("loadBtn").addEventListener("click", loadStats);
+    document.getElementById("refreshBtn").addEventListener("click", loadStats);
+    document.getElementById("clearBtn").addEventListener("click", clearAnalytics);
+    document.getElementById("exportBtn").addEventListener("click", exportCsv);
+    document.getElementById("keyInput").addEventListener("keydown", (event) => {
+      if (event.key === "Enter") loadStats();
+    });
+    document.querySelectorAll(".range-btn").forEach((button) => {
+      button.addEventListener("click", () => applyRange(button.dataset.range));
+    });
+
+    const savedKey = localStorage.getItem(KEY_STORAGE);
+    if (savedKey) {
+      document.getElementById("keyInput").value = savedKey;
+      state.adminKey = savedKey;
+      loadStats();
+    }
+    // Nav item click handler
+    document.querySelectorAll(".nav-item").forEach((item) => {
+      item.addEventListener("click", (e) => {
+        e.preventDefault();
+        document.querySelectorAll(".nav-item").forEach((nav) => nav.classList.remove("active"));
+        item.classList.add("active");
+        const section = item.dataset.section;
+        document.querySelector(".title-wrap h1").textContent = section.charAt(0).toUpperCase() + section.slice(1);
+      });
+    });
+
+    startAutoRefresh();
+  </script>
+</body>
+</html>

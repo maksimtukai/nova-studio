@@ -23,6 +23,27 @@ const FIELD_ICONS = {
   confirmNewPassword: "🔐",
 };
 
+function trackAnalytics(eventName, meta = {}) {
+  try {
+    if (window.NovaAnalytics && typeof window.NovaAnalytics.track === "function") {
+      window.NovaAnalytics.track(eventName, meta);
+    }
+  } catch (e) {}
+}
+
+function clearAuthAutofill() {
+  [loginForm, registerForm, resetPasswordForm].forEach((form) => {
+    if (!form) return;
+    if (form.contains(document.activeElement)) return;
+    form.setAttribute("autocomplete", "off");
+    form.querySelectorAll("input").forEach((input) => {
+      if (input.type === "password") input.setAttribute("autocomplete", "new-password");
+      else input.setAttribute("autocomplete", "off");
+      input.value = "";
+    });
+  });
+}
+
 async function apiAuth(endpoint, body) {
   const res = await fetch(`${AUTH_API}/${endpoint}`, {
     method: "POST",
@@ -230,9 +251,14 @@ function bindRegistration() {
 
     setMessage(registerMessage, "Регистрация...", "");
     const { ok, data } = await apiAuth("register", { name, email, password });
-    if (!ok) { setMessage(registerMessage, data.message || "Ошибка сервера.", "is-error"); return; }
+    if (!ok) {
+      trackAnalytics("register_failed", { meta: { email, reason: data.message || "server_error" } });
+      setMessage(registerMessage, data.message || "Ошибка сервера.", "is-error");
+      return;
+    }
 
     registerForm.reset();
+    trackAnalytics("register_success", { meta: { email } });
     setMessage(registerMessage, "Регистрация успешна. Войдите!", "is-success");
 
     if (authTabs.length && loginForm && registerForm) { switchTab("login"); return; }
@@ -253,11 +279,17 @@ function bindLogin() {
     setMessage(loginMessage, "Вход...", "");
     try {
       const { ok, data } = await apiAuth("login", { email, password });
-      if (!ok) { setMessage(loginMessage, data.message || "Неверный email или пароль.", "is-error"); return; }
+      if (!ok) {
+        trackAnalytics("login_failed", { meta: { email, reason: data.message || "invalid_credentials" } });
+        setMessage(loginMessage, data.message || "Неверный email или пароль.", "is-error");
+        return;
+      }
       sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({ name: data.name, email: data.email }));
+      trackAnalytics("login_success", { meta: { email } });
       setMessage(loginMessage, "Успешный вход. Перенаправление...", "is-success");
       setTimeout(() => { window.location.href = "index.html?logged=1"; }, 500);
     } catch(e) {
+      trackAnalytics("login_failed", { meta: { email, reason: "network_error" } });
       setMessage(loginMessage, "Ошибка подключения к серверу. Попробуйте позже.", "is-error");
     }
   });
@@ -290,9 +322,14 @@ function bindPasswordReset() {
 
     setMessage(resetPasswordMessage, "Обновление...", "");
     const { ok, data } = await apiAuth("reset", { email, newPassword });
-    if (!ok) { setMessage(resetPasswordMessage, data.message || "Ошибка.", "is-error"); return; }
+    if (!ok) {
+      trackAnalytics("password_reset_failed", { meta: { email, reason: data.message || "reset_failed" } });
+      setMessage(resetPasswordMessage, data.message || "Ошибка.", "is-error");
+      return;
+    }
 
     resetPasswordForm.reset();
+    trackAnalytics("password_reset_success", { meta: { email } });
     setMessage(resetPasswordMessage, "Пароль обновлён. Войдите.", "is-success");
     setTimeout(() => { loginForm?.reset?.(); showReset(false); }, 600);
   });
@@ -309,6 +346,9 @@ bindRegistration();
 bindLogin();
 bindPasswordReset();
 setupFieldIconsAndPasswordUI();
+clearAuthAutofill();
+[50, 300, 900].forEach((delay) => setTimeout(clearAuthAutofill, delay));
+window.addEventListener("pageshow", clearAuthAutofill);
 wireLiveValidation(registerForm, registerMessage, () => {
   if (!registerForm) return null;
   const pass = registerForm.querySelector('input[name="password"]');

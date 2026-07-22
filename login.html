@@ -36,15 +36,15 @@
             Нет аккаунта? <a class="auth-link" href="index.html">Регистрация</a>
           </p>
 
-          <form id="loginForm" class="auth-form">
+          <form id="loginForm" class="auth-form" autocomplete="off">
             <h2>Вход в аккаунт</h2>
             <label class="field">
               <span>Email</span>
-              <input type="email" name="email" placeholder="you@mail.com" required>
+              <input type="email" name="email" placeholder="you@mail.com" autocomplete="off" required>
             </label>
             <label class="field">
               <span>Пароль</span>
-              <input type="password" name="password" placeholder="Введите пароль" required>
+              <input type="password" name="password" placeholder="Введите пароль" autocomplete="new-password" required>
             </label>
             <button class="btn-primary" type="submit">Войти</button>
             <p class="auth-meta" style="margin-top: 12px;">
@@ -53,19 +53,19 @@
             <p class="form-message" id="loginMessage"></p>
           </form>
 
-          <form id="resetPasswordForm" class="auth-form is-hidden">
+          <form id="resetPasswordForm" class="auth-form is-hidden" autocomplete="off">
             <h2>Сброс пароля</h2>
             <label class="field">
               <span>Email</span>
-              <input type="email" name="email" placeholder="you@mail.com" required>
+              <input type="email" name="email" placeholder="you@mail.com" autocomplete="off" required>
             </label>
             <label class="field">
               <span>Новый пароль</span>
-              <input type="password" name="newPassword" minlength="6" placeholder="Минимум 6 символов" required>
+              <input type="password" name="newPassword" minlength="6" placeholder="Минимум 6 символов" autocomplete="new-password" required>
             </label>
             <label class="field">
               <span>Повторите новый пароль</span>
-              <input type="password" name="confirmNewPassword" minlength="6" placeholder="Повторите пароль" required>
+              <input type="password" name="confirmNewPassword" minlength="6" placeholder="Повторите пароль" autocomplete="new-password" required>
             </label>
             <button class="btn-primary" type="submit">Обновить пароль</button>
             <p class="auth-meta" style="margin-top: 12px;">
@@ -78,6 +78,7 @@
     </header>
   </div>
 
+  <script src="analytics.js"></script>
   <script src="script.js?v=3"></script>
   <script src="pwa.js"></script>
   <script src="enhancements.js"></script>

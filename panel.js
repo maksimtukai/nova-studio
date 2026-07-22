@@ -30,6 +30,14 @@ const refreshBtn = document.getElementById("refreshStatusBtn");
 const STATUS_REFRESH_MS = 10000;
 let statusRefreshTimer = null;
 
+function trackPanelAnalytics(eventName, meta = {}) {
+  try {
+    if (window.NovaAnalytics && typeof window.NovaAnalytics.track === "function") {
+      window.NovaAnalytics.track(eventName, meta);
+    }
+  } catch (e) {}
+}
+
 function getUsers() {
   try {
     const users = JSON.parse(localStorage.getItem(USERS_STORAGE_KEY) || "[]");
@@ -282,9 +290,11 @@ function startStatusAutoRefresh() {
 async function sendAction(path) {
   try {
     const data = await apiFetch(path, "POST");
+    trackPanelAnalytics(`server_${path}`, { meta: { path } });
     setMessage(actionMessage, data.message || "Готово", "is-success");
     await fetchServerStatus();
   } catch (e) {
+    trackPanelAnalytics(`server_${path}_failed`, { meta: { path, reason: e.message } });
     setMessage(actionMessage, e.message, "is-error");
   }
 }
@@ -378,12 +388,14 @@ loginForm.addEventListener("submit", async (event) => {
   }
 
   if (!found) {
+    trackPanelAnalytics("panel_login_failed", { meta: { email } });
     setMessage(loginMessage, "Неверный email или пароль.", "is-error");
     return;
   }
 
   saveAdminKey(adminKey);
   saveSession(found);
+  trackPanelAnalytics("panel_login_success", { meta: { email } });
   setMessage(loginMessage, "Вход выполнен.", "is-success");
   togglePanelVisibility();
   fetchServerStatus().catch(() => {});

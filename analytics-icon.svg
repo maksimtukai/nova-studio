@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0a1614"/>
+      <stop offset="100%" stop-color="#060f0e"/>
+    </linearGradient>
+    <linearGradient id="chartGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4dffb1"/>
+      <stop offset="100%" stop-color="#14d67b"/>
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#14b6ff"/>
+      <stop offset="100%" stop-color="#9c6bff"/>
+    </linearGradient>
+  </defs>
+  <rect x="16" y="16" width="480" height="480" rx="108" fill="url(#bgGrad)"/>
+  <g transform="translate(80, 120)">
+    <!-- Grid lines -->
+    <line x1="0" y1="0" x2="352" y2="0" stroke="rgba(77,255,177,0.15)" stroke-width="8"/>
+    <line x1="0" y1="88" x2="352" y2="88" stroke="rgba(77,255,177,0.1)" stroke-width="4"/>
+    <line x1="0" y1="176" x2="352" y2="176" stroke="rgba(77,255,177,0.1)" stroke-width="4"/>
+    <!-- Area chart -->
+    <path d="M0 200 L0 130 Q88 80 176 100 T352 40 L352 200 Z" fill="rgba(77,255,177,0.25)"/>
+    <!-- Line chart -->
+    <path d="M0 130 Q88 80 176 100 T352 40" fill="none" stroke="url(#chartGrad)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Dots on chart -->
+    <circle cx="0" cy="130" r="16" fill="url(#chartGrad)"/>
+    <circle cx="176" cy="100" r="16" fill="url(#chartGrad)"/>
+    <circle cx="352" cy="40" r="20" fill="url(#accentGrad)"/>
+  </g>
+</svg>

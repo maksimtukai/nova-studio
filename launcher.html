@@ -173,7 +173,7 @@
   </div>
   <div class="status-item">
     <span class="dot" id="dot-ngrok"></span>
-    <span class="status-label">ngrok</span>
+    <span class="status-label">туннель</span>
     <span class="status-val" id="val-ngrok">...</span>
   </div>
   <div class="status-item">
@@ -207,6 +207,12 @@
     <span class="card-desc">Статистика посещений</span>
     <span class="card-badge">stats</span>
   </a>
+  <a class="card" href="http://localhost:43219/nova/analytics.html" target="_blank" style="--c:#8b5cf6">
+    <span class="card-icon">📊</span>
+    <span class="card-name">Аналитика</span>
+    <span class="card-desc">Общая веб-аналитика</span>
+    <span class="card-badge">analytics</span>
+  </a>
   <a class="card" href="http://localhost:43219/nova/control.html" target="_blank" style="--c:#f59e0b">
     <span class="card-icon">⚡</span>
     <span class="card-name">Терминал</span>
@@ -235,11 +241,12 @@
 </div>
 
 <div class="ngrok-row">
-  <span style="color:#444;font-size:11px">ngrok:</span>
+  <span style="color:#444;font-size:11px">туннель:</span>
   <a class="ngrok-url" id="ngrok-link" href="#" target="_blank">загрузка...</a>
   <button class="copy-btn" id="copy-btn" onclick="copyNgrok()">COPY</button>
 </div>
 
+<script src="analytics.js"></script>
 <script>
   // Если открыт как файл — показать инструкцию
   if (location.protocol === 'file:') {

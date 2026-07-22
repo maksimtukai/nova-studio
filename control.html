@@ -264,7 +264,7 @@
 </div>
 
 <div id="ngrok-row">
-  <span class="stat-label">ngrok:</span>
+  <span class="stat-label">туннель:</span>
   <span class="indicator" id="ngrok-ind"></span>
   <a id="ngrok-url" href="#" target="_blank">—</a>
   <button class="btn" id="ngrok-copy-btn" onclick="copyNgrok()" style="display:none;margin-left:8px;padding:2px 8px;font-size:11px">COPY</button>
@@ -284,6 +284,7 @@
 <input id="filterIp" style="display:none" value="">
 <input id="filterPath" style="display:none" value="">
 
+<script src="analytics.js"></script>
 <script>
   const API    = 'http://localhost:8093/api';
   const LOG_URL = '/nova/visitors.log';
@@ -318,7 +319,7 @@
     fetchLogs(true);
     fetchStatus();
     fetchNgrok();
-    if (!pollTimer) pollTimer = setInterval(tick, 10000);
+    if (!pollTimer) pollTimer = setInterval(tick, 20000);
     startNgrokPoller();
   }
 
@@ -417,7 +418,7 @@
       startedAt = null; lastPid = null;
       document.getElementById('terminal').innerHTML = '<div id="empty">// подключение...</div>';
       fetchLogs(true); fetchNgrok();
-      if (!pollTimer) pollTimer = setInterval(tick, 10000);
+      if (!pollTimer) pollTimer = setInterval(tick, 20000);
       startNgrokPoller();
     }
 
@@ -574,7 +575,7 @@
 
   function startNgrokPoller() {
     if (ngrokTimer) clearInterval(ngrokTimer);
-    ngrokTimer = setInterval(fetchNgrok, 5000);
+    ngrokTimer = setInterval(fetchNgrok, 10000);
   }
 
   function setNgrokUrl(url) {
@@ -624,7 +625,7 @@
       sysLog(d.message || 'Готово');
       setNgrokUrl(d.url);
     } catch(e) {
-      sysLog('Ошибка ngrok: ' + e.message, true);
+      sysLog('Ошибка туннеля: ' + e.message, true);
     } finally {
       btn.disabled = false;
       btn.textContent = 'NEW IP';
@@ -640,6 +641,10 @@
   document.getElementById('keyInput').addEventListener('input', () => {
     localStorage.setItem('nova_ctrl_key', document.getElementById('keyInput').value);
   });
+
+  if (window.NovaAnalytics && typeof window.NovaAnalytics.track === 'function') {
+    window.NovaAnalytics.track('control_open');
+  }
 </script>
 </body>
 </html>

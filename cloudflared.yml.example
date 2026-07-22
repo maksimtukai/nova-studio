@@ -1,0 +1,16 @@
+# Named tunnel (stable URL) — requires Cloudflare account + domain.
+#
+# Setup:
+#   1. cloudflared tunnel login
+#   2. cloudflared tunnel create nova-studio
+#   3. cloudflared tunnel route dns nova-studio app.yourdomain.com
+#   4. Copy credentials JSON to this folder
+#   5. Rename this file to cloudflared.yml and fill in tunnel ID + credentials path
+#
+# tunnel: <TUNNEL-UUID>
+# credentials-file: C:\path\to\<TUNNEL-UUID>.json
+#
+# ingress:
+#   - hostname: app.yourdomain.com
+#     service: http://localhost:43219
+#   - service: http_status:404

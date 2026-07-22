@@ -1,0 +1,7 @@
+﻿tunnel: 91a3b9ea-8ced-4cfd-bf35-a31d80f01be4
+credentials-file: C:/Users/maxtu/.cloudflared/91a3b9ea-8ced-4cfd-bf35-a31d80f01be4.json
+
+ingress:
+  - hostname: app.novastudio.ru
+    service: http://localhost:43219
+  - service: http_status:404
