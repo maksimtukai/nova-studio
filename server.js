@@ -838,6 +838,12 @@ async function handleAuth(action, req, res) {
       const email = String(body.email || '').trim().toLowerCase();
       const newPass = String(body.newPassword || '');
       if (newPass.length < 6) return sendJson(res, 400, { message: 'Пароль должен быть от 6 символов.' });
+
+      const fallbackName = (() => {
+        const left = String(email.split('@')[0] || '').trim();
+        const clean = left.replace(/[^\wА-Яа-яёЁ-]+/g, '').slice(0, 32);
+        return clean || 'Пользователь';
+      })();
       
       if (supabase) {
         const { data: updated, error } = await supabase
@@ -847,11 +853,22 @@ async function handleAuth(action, req, res) {
           .select('email');
         if (error) return sendJson(res, 500, { message: 'Ошибка обновления пароля. Попробуйте позже.' });
         if (!updated || (Array.isArray(updated) && updated.length === 0)) {
-          return sendJson(res, 400, { message: 'Email не найден.' });
+          // Для демо-режима: если пользователь не найден, создаём аккаунт и ставим новый пароль.
+          const { error: insertError } = await supabase
+            .from('users')
+            .insert({ name: fallbackName, email, password: hashPassword(newPass) });
+          if (insertError) {
+            return sendJson(res, 500, { message: 'Не удалось создать аккаунт. Попробуйте позже.' });
+          }
+          return sendJson(res, 200, { message: 'Аккаунт создан. Теперь можно войти.' });
         }
       } else {
         const idx = users.findIndex(u => u.email === email);
-        if (idx < 0) return sendJson(res, 400, { message: 'Email не найден.' });
+        if (idx < 0) {
+          users.push({ name: fallbackName, email, password: hashPassword(newPass) });
+          writeUsers(users);
+          return sendJson(res, 200, { message: 'Аккаунт создан. Теперь можно войти.' });
+        }
         users[idx].password = hashPassword(newPass);
         writeUsers(users);
       }
