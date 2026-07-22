@@ -682,23 +682,43 @@ async function writeUsers(users) {
 
 function hashPassword(password, salt = crypto.randomBytes(16).toString('hex')) {
   const hash = crypto.pbkdf2Sync(password, salt, 210000, 32, 'sha256').toString('hex');
-  return `pbkdf2_sha256$210000$${salt}$${hash}`;
+  // Формат совместим с Django: pbkdf2_sha256$iterations$salt$hash
+  return ['pbkdf2_sha256', '210000', salt, hash].join('$');
 }
 
 function verifyPassword(password, stored) {
   const value = String(stored || '');
   const parts = value.split('$');
-  if (parts.length !== 4 || parts[0] !== 'pbkdf2_sha256') {
+  // Если это не наш формат хеша — поддержим старый plaintext режим.
+  if (parts[0] !== 'pbkdf2_sha256') {
     return value === password;
   }
 
-  const [, iterationsRaw, salt, expectedHex] = parts;
+  // Поддерживаем:
+  // 1) Нормальный формат: pbkdf2_sha256$210000$salt$hash
+  // 2) Ранее встречавшийся баг с двойным "$": pbkdf2_sha256$210000$$salt$hash
+  let iterationsRaw = parts[1];
+  let salt = '';
+  let expectedHex = '';
+  if (parts.length === 4) {
+    salt = parts[2];
+    expectedHex = parts[3];
+  } else if (parts.length === 5 && parts[2] === '') {
+    salt = parts[3];
+    expectedHex = parts[4];
+  } else {
+    return false;
+  }
   const iterations = Number(iterationsRaw);
   if (!Number.isInteger(iterations) || iterations <= 0) return false;
 
   const actual = crypto.pbkdf2Sync(password, salt, iterations, 32, 'sha256');
   const expected = Buffer.from(expectedHex, 'hex');
   return expected.length === actual.length && crypto.timingSafeEqual(actual, expected);
+}
+
+function isBuggyDoubleDollarHash(stored) {
+  return typeof stored === 'string' && stored.startsWith('pbkdf2_sha256$') && stored.includes('$210000$$');
 }
 
 function hasPlaintextPassword(user) {
@@ -788,11 +808,25 @@ async function handleAuth(action, req, res) {
         if (error) return sendJson(res, 500, { message: 'Ошибка базы данных. Попробуйте позже.' });
         if (!user) return sendJson(res, 401, { message: 'Неверный email или пароль.' });
         if (!verifyPassword(pass, user.password)) return sendJson(res, 401, { message: 'Неверный email или пароль.' });
+        // Миграция старого "buggy" формата хеша в корректный (без влияния на пользователя).
+        if (isBuggyDoubleDollarHash(user.password)) {
+          try {
+            await supabase
+              .from('users')
+              .update({ password: hashPassword(pass) })
+              .eq('email', email);
+          } catch {}
+        }
         return sendJson(res, 200, { message: 'Успешный вход.', name: user.name, email: user.email });
       } else {
         const found = users.find(u => u.email === email && verifyPassword(pass, u.password));
         if (!found) return sendJson(res, 401, { message: 'Неверный email или пароль.' });
         if (hasPlaintextPassword(found)) {
+          found.password = hashPassword(pass);
+          writeUsers(users);
+        }
+        // Мигрируем старый buggy-хеш в корректный.
+        if (isBuggyDoubleDollarHash(found.password)) {
           found.password = hashPassword(pass);
           writeUsers(users);
         }
