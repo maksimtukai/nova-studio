@@ -16,7 +16,8 @@ const SESSION_STORAGE_KEY = "nova_session";
 const AUTH_API = location.protocol === 'file:' ? 'http://localhost:43219/nova/api/auth' : '/nova/api/auth';
 const FIELD_ICONS = {
   name: "👤",
-  email: "✉️",
+  // На некоторых устройствах "✉️" рендерится как пустой квадратик, поэтому используем более надёжный символ.
+  email: "@",
   password: "🔒",
   confirmPassword: "🔐",
   newPassword: "🔒",
