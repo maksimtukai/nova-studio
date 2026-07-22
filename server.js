@@ -721,6 +721,15 @@ function isBuggyDoubleDollarHash(stored) {
   return typeof stored === 'string' && stored.startsWith('pbkdf2_sha256$') && stored.includes('$210000$$');
 }
 
+function isSupabaseSchemaCacheError(error) {
+  const text = String((error && (error.message || error.error_description)) || error || '');
+  return /schema cache|could not find the table|does not exist/i.test(text);
+}
+
+function supabaseSetupHint() {
+  return 'В Supabase не настроена таблица users. Откройте Supabase → SQL Editor и выполните файл supabase-schema.sql (таблица users).';
+}
+
 function hasPlaintextPassword(user) {
   return user && typeof user.password === 'string' && !user.password.startsWith('pbkdf2_sha256$');
 }
@@ -786,7 +795,10 @@ async function handleAuth(action, req, res) {
         const { error } = await supabase
           .from('users')
           .insert({ name, email, password: hashPassword(pass) });
-        if (error) return sendJson(res, 500, { message: 'Ошибка регистрации.' });
+        if (error) {
+          if (isSupabaseSchemaCacheError(error)) return sendJson(res, 500, { message: supabaseSetupHint() });
+          return sendJson(res, 500, { message: 'Ошибка регистрации.' });
+        }
       } else {
         if (users.find(u => u.email === email)) return sendJson(res, 409, { message: 'Email уже зарегистрирован.' });
         users.push({ name, email, password: hashPassword(pass) });
@@ -805,7 +817,10 @@ async function handleAuth(action, req, res) {
           .select('*')
           .eq('email', email)
           .maybeSingle();
-        if (error) return sendJson(res, 500, { message: 'Ошибка базы данных. Попробуйте позже.' });
+        if (error) {
+          if (isSupabaseSchemaCacheError(error)) return sendJson(res, 500, { message: supabaseSetupHint() });
+          return sendJson(res, 500, { message: 'Ошибка базы данных. Попробуйте позже.' });
+        }
         if (!user) return sendJson(res, 401, { message: 'Неверный email или пароль.' });
         if (!verifyPassword(pass, user.password)) return sendJson(res, 401, { message: 'Неверный email или пароль.' });
         // Миграция старого "buggy" формата хеша в корректный (без влияния на пользователя).
@@ -851,13 +866,17 @@ async function handleAuth(action, req, res) {
           .update({ password: hashPassword(newPass) })
           .eq('email', email)
           .select('email');
-        if (error) return sendJson(res, 500, { message: 'Ошибка обновления пароля. Попробуйте позже.' });
+        if (error) {
+          if (isSupabaseSchemaCacheError(error)) return sendJson(res, 500, { message: supabaseSetupHint() });
+          return sendJson(res, 500, { message: 'Ошибка обновления пароля. Попробуйте позже.' });
+        }
         if (!updated || (Array.isArray(updated) && updated.length === 0)) {
           // Для демо-режима: если пользователь не найден, создаём аккаунт и ставим новый пароль.
           const { error: insertError } = await supabase
             .from('users')
             .insert({ name: fallbackName, email, password: hashPassword(newPass) });
           if (insertError) {
+            if (isSupabaseSchemaCacheError(insertError)) return sendJson(res, 500, { message: supabaseSetupHint() });
             return sendJson(res, 500, { message: 'Не удалось создать аккаунт. Попробуйте позже.' });
           }
           return sendJson(res, 200, { message: 'Аккаунт создан. Теперь можно войти.' });
